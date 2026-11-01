@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "Please cite the PiVo technical report when using this release."
+title: "PiVo: two English voices in 1.4 million inference parameters"
+version: 1.0.0
+date-released: 2026-11-01
+type: software
+authors:
+  - family-names: Lehmann
+    given-names: Leon
+    email: lehmann@empero.org
+license: Apache-2.0

@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pivo-tts"
+version = "1.0.0"
+description = "PiVo-1.4M: compact two-voice English TTS with CPU ONNX inference"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE", "LICENSES/*", "THIRD_PARTY.md"]
+authors = [{name = "Leon Lehmann", email = "lehmann@empero.org"}]
+maintainers = [{name = "Empero Research", email = "research@empero.org"}]
+dependencies = ["numpy>=1.26,<3", "onnxruntime>=1.20,<2"]
+
+[project.optional-dependencies]
+server = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1"]
+hub = ["huggingface-hub>=0.30,<2"]
+dev = ["pytest>=8", "httpx>=0.27", "build>=1"]
+
+[project.scripts]
+pivo = "pivo.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pivo = ["resources/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
