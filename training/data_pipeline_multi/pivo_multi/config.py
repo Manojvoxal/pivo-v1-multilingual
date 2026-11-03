@@ -6,8 +6,6 @@ Default run (tiers 1 + 2): 12 languages x 2 voices = 24 voices, ids 0..23.
 All tiers listed: 23 languages, 46 voice ids.
 """
 
-import re
-
 from .langs import DEFAULT_PHASES, LANG, LANGS
 
 # ------------------------------------------------------------------ hours
@@ -19,21 +17,20 @@ OVERCOLLECT = 1.25                # prepare a bit more; alignment/build drop som
 # ------------------------------------------------------------------ Rasa
 RASA_REPO = "ai4bharat/Rasa"
 RASA_SPLIT = "train"              # Rasa's own test split is kept aside for evaluation
-# Rasa's `style` column mixes neutral reading, news, book narration, six emotions,
-# commands and conversations. Keep plain read speech only. Run the `scan` stage first:
-# it prints every style value with hours, then pass --styles to pin the exact list.
-STYLE_ALLOW = re.compile(r"neutral|read|wiki|book|news|narrat|story|indictts|plain|normal", re.I)
-STYLE_DENY = re.compile(r"happy|sad|ang|fear|disgust|surpris|emotion|conv|command|alexa|"
-                        r"bigbasket|umang|digipay|chat|dialog|whisper|shout", re.I)
+# Rasa `style` labels seen in the 3 Nov 2026 smoke scan (Hindi, Tamil):
+#   read speech : WIKI, BOOK, NEWS, INDIC (IndicTTS sentences)          -> kept
+#   emotions    : ANGER, DISGUST, FEAR, HAPPY, SAD, SURPRISE             -> dropped
+#   other       : CONV (conversation), PROPER NOUN (lists of names, ~2 s clips),
+#                 ALEXA, BB (BigBasket), DIGI (DigiPay), UMANG (commands)  -> dropped
+# Plain read speech gives a tiny model one consistent speaking style per voice.
+# Override with --styles "A,B,C"; the scan report lists every label with its hours.
+DEFAULT_STYLES = ("WIKI", "BOOK", "NEWS", "INDIC")
 
 
 def style_allowed(style, explicit=None):
-    s = (style or "").strip()
-    if explicit is not None:
-        return s.lower() in explicit
-    if not s:
-        return False
-    return bool(STYLE_ALLOW.search(s)) and not STYLE_DENY.search(s)
+    s = (style or "").strip().lower()
+    allowed = explicit if explicit is not None else {x.lower() for x in DEFAULT_STYLES}
+    return bool(s) and s in allowed
 
 
 # ------------------------------------------------------------------ English

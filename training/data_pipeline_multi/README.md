@@ -62,25 +62,23 @@ Ids are append-only (tier order), so adding tier 3 later never renumbers voices 
 ```
 # 0) offline tests on your laptop (no Modal)
 pip install pytest pyarrow soundfile soxr pyloudnorm numpy
-set PIVO_CMUDICT=C:\Users\Manoj\pivo-v1\src\pivo\resources\cmudict.dict
+$env:PIVO_CMUDICT="C:\Users\Manoj\pivo-v1\src\pivo\resources\cmudict.dict"
 python -m pytest tests -q
 
-# 1) smoke test on Modal (~20 min): en (Hi-Fi), kn (SYSPIN), hi + ta (Rasa, 2 shards), tiny hours
+# 1) smoke test on Modal (~20 min): en (Hi-Fi), kn (SYSPIN), hi + ta (Rasa, 6 parquet files each), tiny hours
 modal run prepare_pivo_multi.py --smoke
 
-# 2) look at Rasa's style labels before downloading audio (a few minutes)
+# 2) scan all Rasa metadata (a few minutes, no audio download) and check the table:
+#    hours per voice x style, scripts, what got selected
 modal run prepare_pivo_multi.py --stage scan --only
-#    -> prints, per language: hours by gender x style, scripts used, what got selected.
-#    Pick the read-speech styles, then pin them:
-modal run prepare_pivo_multi.py --stage scan --only --styles "BOOK,NEWS,WIKI"
 
 # 3) full run (keeps going if the laptop sleeps); add --english hifi if IndicTTS is not uploaded yet
-modal run --detach prepare_pivo_multi.py --styles "BOOK,NEWS,WIKI"
+modal run --detach prepare_pivo_multi.py
 
 #    or tier-1 languages first:
-modal run --detach prepare_pivo_multi.py --langs kn,en,hi,te,ta,bn --styles "BOOK,NEWS,WIKI"
+modal run --detach prepare_pivo_multi.py --langs kn,en,hi,te,ta,bn
 #    later, optional tier 3 (finalize merges everything prepared so far):
-modal run --detach prepare_pivo_multi.py --phases 3 --styles "BOOK,NEWS,WIKI"
+modal run --detach prepare_pivo_multi.py --phases 3
 
 # resume from a stage / run one stage
 modal run prepare_pivo_multi.py --stage align
@@ -94,10 +92,11 @@ Paste the printed scan table and the final summary back into the chat.
 
 ## How it works
 
-1. **scan** reads only Rasa's text/gender/style/duration columns (no audio), runs the
+1. **scan** reads only Rasa's text/gender/style/duration columns (no audio), keeps the
+   read-speech styles **WIKI, BOOK, NEWS, INDIC** (emotions, CONV, PROPER NOUN and the
+   ALEXA/BB/DIGI/UMANG commands are dropped; override with `--styles "A,B"`), runs the
    frontend on every sentence, and selects 12 h × 1.25 per voice of clips that pass.
-   It stops the run if a language has < 3 h selected for a voice (wrong `--styles`,
-   or no access).
+   It stops the run if a voice has < 3 h selected.
 2. **prepare** downloads only the parquet files holding selected clips (48 in parallel),
    resamples to 16 kHz mono, −20 LUFS, writes the MFA corpus.
 3. **align** trains one MFA aligner per language on 1.5 h per voice, then aligns all clips.

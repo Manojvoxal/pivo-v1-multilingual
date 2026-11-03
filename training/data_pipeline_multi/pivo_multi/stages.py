@@ -23,7 +23,7 @@ import subprocess
 import numpy as np
 
 from . import prep
-from .config import OVERCOLLECT, style_allowed
+from .config import DEFAULT_STYLES, OVERCOLLECT, style_allowed
 from .frontend import FrontendError, drop_reason, phonemize
 from .langs import LANG, LANG_CODES, LANG_TO_ID
 from .scripts import script_of_word
@@ -72,7 +72,9 @@ def select_rasa(meta_rows, lang, hours_per_voice, styles=None, min_s=1.5, max_s=
         by_style[key][0] += 1
         by_style[key][1] += (dur or 0.0) / 3600
         for w in r["text"].split()[:3]:
-            scripts[script_of_word(w) or "other"] += 1
+            w = w.strip(".,?!;:'\"()[]-–—।॥|…")
+            if w:
+                scripts[script_of_word(w) or "other"] += 1
         if g is None:
             drops["unknown_gender"] += 1
             continue
@@ -107,7 +109,7 @@ def select_rasa(meta_rows, lang, hours_per_voice, styles=None, min_s=1.5, max_s=
         "gender_values": dict(genders_raw),
         "script_of_first_words": dict(scripts.most_common()),
         "dropped": dict(drops), "selected": chosen,
-        "style_rule": sorted(explicit) if explicit is not None else "default allow/deny regex",
+        "style_rule": sorted(explicit) if explicit is not None else "default " + ",".join(DEFAULT_STYLES),
     }
     return selected, report
 

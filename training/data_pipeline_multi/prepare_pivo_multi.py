@@ -90,7 +90,7 @@ PREP_SHARDS, ALIGN_SHARDS, BUILD_SHARDS = 12, 16, 8   # per speaker / language /
 SMOKE_SHARDS = 2
 SMOKE_LANGS = ["en", "kn", "hi", "ta"]
 SMOKE_HOURS = 0.1
-SMOKE_RASA_SHARDS = 2          # scan only the first N parquet files of each language
+SMOKE_RASA_SHARDS = 6          # smoke: scan 6 parquet files spread evenly (Rasa files are sorted by speaker/style)
 ALIGNER_TRAIN_HOURS = 1.5      # per speaker, to train each language's aligner
 
 
@@ -156,7 +156,8 @@ def scan_language(lang: str, config_name: str, hours: float, styles: list = None
         raise RuntimeError(f"{lang}: no {config.RASA_SPLIT} parquet files under {config_name}/ "
                            f"(accepted the Rasa terms on Hugging Face? HF_TOKEN in the '{HF_SECRET}' secret?)")
     if smoke:
-        shards = shards[:SMOKE_RASA_SHARDS]
+        k = min(SMOKE_RASA_SHARDS, len(shards))
+        shards = [shards[round(i * (len(shards) - 1) / max(1, k - 1))] for i in range(k)]
     with ThreadPoolExecutor(8) as ex:
         results = list(ex.map(lambda p: sources.rasa_read_meta(config.RASA_REPO, p, token), shards))
     rows = [r for part, _ in results for r in part]
