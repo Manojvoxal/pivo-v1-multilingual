@@ -13,11 +13,14 @@ def main(argv=None):
     synth = commands.add_parser("synthesize", help="generate a mono PCM16 WAV")
     synth.add_argument("--model-dir", default=os.getenv("PIVO_MODEL_DIR", "."))
     synth.add_argument("--text", required=True)
-    synth.add_argument("--voice", choices=["Pi", "Vo"], default="Pi")
+    synth.add_argument("--voice", default=None,
+                       help="voice name (list them with `pivo voices`); default: the model's default voice")
     synth.add_argument("--speed", type=float, default=1.0)
     synth.add_argument("--threads", type=int, default=1)
     synth.add_argument("--overrides", type=Path, help="JSON word-to-ARPAbet-list mapping")
     synth.add_argument("--output", type=Path, required=True)
+    voices = commands.add_parser("voices", help="list the voices of a model")
+    voices.add_argument("--model-dir", default=os.getenv("PIVO_MODEL_DIR", "."))
     serve = commands.add_parser("serve", help="serve the buffered WAV HTTP API")
     serve.add_argument("--model-dir", default=os.getenv("PIVO_MODEL_DIR", "."))
     serve.add_argument("--host", default="127.0.0.1")
@@ -33,6 +36,11 @@ def main(argv=None):
             overrides = json.loads(args.overrides.read_text()) if args.overrides else None
             model = PiVo(args.model_dir, threads=args.threads)
             print(model.save(args.output, args.text, voice=args.voice, speed=args.speed, overrides=overrides))
+        elif args.command == "voices":
+            model = PiVo(args.model_dir)
+            for name, info in model.voice_info.items():
+                default = "  (default)" if name == model.default_voice else ""
+                print(f"{name}\t{info.get('language', 'en')}\t{info.get('speaker', '')}{default}")
         elif args.command == "serve":
             try:
                 import uvicorn

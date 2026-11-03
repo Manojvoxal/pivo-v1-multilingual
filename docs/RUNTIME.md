@@ -12,8 +12,9 @@ session. The PyTorch checkpoints in the model repository are never loaded.
 
 - `PiVo(model_dir, threads=1, max_chars=2000, max_tokens=512)` loads one
   reusable set of sessions.
-- `synthesize(text, voice="Pi", speed=1.0, overrides=None)` returns float32
-  PCM at 16 kHz.
+- `synthesize(text, voice=None, speed=1.0, overrides=None)` returns float32
+  PCM at 16 kHz. `voice=None` uses the model's default voice (`Pi` for
+  PiVo-1.4M, `kn_f` for PiVo-KN-1.4M); `voices` and `voice_info` list them.
 - `save(path, text, ...)` writes a 16 kHz mono PCM16 WAV.
 - `iter_audio(...)` yields 160-sample (10 ms) frames. Vocoder and
   de-emphasis state carry over between frames within an utterance, and
@@ -29,6 +30,34 @@ out as initialisms, except NASA, which keeps its dictionary pronunciation.
 Unknown words, ambiguous slash dates or fractions, and unsupported
 characters raise `ValueError`; unknown words can be handled with
 pronunciation overrides.
+
+### Kannada + English models
+
+`metadata.json` names the frontend. PiVo-1.4M uses the English one above
+(`pivo-en-v1`, 79 symbols). PiVo-KN-1.4M uses `pivo-kn-en-v1` (`kannada.py`,
+127 symbols, 4 voices):
+
+- Text without Kannada script goes through the English frontend unchanged.
+- Text with Kannada script is read word by word. Kannada words go through
+  rule-based phonemization: inherent vowel, virama, anusvara by place of
+  articulation, and visarga as /h/.
+- Latin words inside Kannada text use the CMU dictionary or overrides.
+- Danda is read as a full stop.
+- Before phonemization, `normalize_kn.py` writes numbers and symbols out as
+  words in formal / news style. In Kannada text this covers:
+  - Kannada and ASCII digits, using the Indian system (ಸಾವಿರ, ಲಕ್ಷ, ಕೋಟಿ)
+  - case suffixes on numbers (2026ರಲ್ಲಿ, 5ಕ್ಕೆ, 3ನೇ)
+  - decimals, percent (ಶೇಕಡಾ), and ₹/Rs./ರೂ. amounts with paise
+  - times with AM/PM, and DD-MM-YYYY or ISO dates
+  - phone and PIN numbers (read digit by digit), ranges, units, common
+    abbreviations (ಡಾ., ಕಿ.ಮೀ.), initials (ಎಸ್.ಎಂ.) and English acronyms
+- English text gets Indian conventions on top of the rules above: ₹, lakh and
+  crore grouping, clock times, day-first dates, phone numbers and units.
+- Latin words missing from the CMU dictionary (usually Indian names such as
+  Bengaluru or Hubballi) are read with romanization rules instead of raising.
+  Pass `guess_unknown=False` to `kannada.phonemize` for the strict behaviour.
+
+The runtime refuses a model whose symbol table does not match its frontend.
 
 ## Durations
 

@@ -9,3 +9,9 @@ dist/
 models/
 *.wav
 .env
+
+# training outputs downloaded from the pivo-runs volume (samples, checkpoints)
+training/runs/
+*.pt
+# files the Claude app saves into this folder
+Claude outputs/

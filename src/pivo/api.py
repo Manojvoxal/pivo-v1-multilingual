@@ -14,9 +14,9 @@ from .engine import wav_bytes
 
 class SpeechRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    model: Literal["pivo-1.4m"] = "pivo-1.4m"
+    model: str | None = Field(default=None, max_length=64)  # one model per server; informational
     input: str = Field(min_length=1, max_length=2000)
-    voice: Literal["Pi", "Vo"] = "Pi"
+    voice: str | None = Field(default=None, max_length=64)  # None = the model's default voice
     response_format: Literal["wav"] = "wav"
     speed: float = Field(default=1.0, ge=0.5, le=2.0, allow_inf_nan=False)
     overrides: dict[str, list[str]] | None = None
@@ -24,8 +24,11 @@ class SpeechRequest(BaseModel):
 
 def create_app(model, *, api_key=None):
     """Create an app around one already-loaded and hash-verified PiVo instance."""
-    app = FastAPI(title="PiVo-1.4M", version="1.0.0",
-                  description="Two English voices. 16 kHz mono PCM16 WAV. Buffered responses.")
+    name = getattr(model, "model_name", "PiVo-1.4M")
+    voice_info = getattr(model, "voice_info", None) or {
+        "Pi": {"id": 0, "language": "en"}, "Vo": {"id": 1, "language": "en"}}
+    app = FastAPI(title=name, version="1.0.0",
+                  description=f"Voices: {', '.join(voice_info)}. 16 kHz mono PCM16 WAV. Buffered responses.")
     key = os.getenv("PIVO_API_KEY", "") if api_key is None else api_key
     bearer = HTTPBearer(auto_error=False)
     busy = threading.BoundedSemaphore(1)
@@ -36,11 +39,11 @@ def create_app(model, *, api_key=None):
 
     @app.get("/health")
     def health():
-        return {"status": "ready", "model": "pivo-1.4m", "sample_rate": model.sample_rate}
+        return {"status": "ready", "model": name.lower(), "sample_rate": model.sample_rate}
 
     @app.get("/v1/voices", dependencies=[Depends(authenticate)])
     def voices():
-        return {"voices": [{"id": "Pi", "language": "en"}, {"id": "Vo", "language": "en"}]}
+        return {"voices": [{"id": v, "language": info.get("language", "en")} for v, info in voice_info.items()]}
 
     @app.post("/v1/audio/speech", dependencies=[Depends(authenticate)])
     def speech(request: SpeechRequest):

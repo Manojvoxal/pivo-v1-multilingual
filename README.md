@@ -11,6 +11,18 @@ Output is 16 kHz mono PCM16 WAV.
 
 Author: Leon Lehmann · Empero Research (research@empero.org) · [Credits](AUTHORS.md)
 
+## Kannada + English: PiVo-KN-1.4M
+
+This fork also runs **PiVo-KN-1.4M**, a Kannada + English model with the same
+architecture and size (1,401,754 parameters). It has four voices: `kn_f`,
+`kn_m`, `en_f` and `en_m`. Training, refinement and export code is in
+[`training/`](training/README.md).
+
+```bash
+pivo voices --model-dir models/PiVo-KN-1.4M
+pivo synthesize --model-dir models/PiVo-KN-1.4M --text "ನಮಸ್ಕಾರ, ನೀವು ಹೇಗಿದ್ದೀರಾ?" --output hello.wav
+```
+
 ## Install
 
 Python 3.11 or newer:

@@ -5,9 +5,16 @@ from pathlib import Path
 
 import numpy as np
 
+from . import kannada, text
 from .audio import deemphasis
 from .phase import phoneme_phase_features
-from .text import SPECIAL, VOICE_IDS, phonemize
+from .text import SPECIAL, VOICE_IDS
+
+# metadata "frontend" -> (phonemize function, symbol table it produces)
+FRONTENDS = {
+    "pivo-en-v1": (text.phonemize, text.SYMBOLS),
+    kannada.FRONTEND_NAME: (kannada.phonemize, kannada.SYMBOLS),
+}
 
 
 class Runtime:
@@ -22,6 +29,14 @@ class Runtime:
             raise ValueError(
                 "this export is untrained; supply trained checkpoints before synthesis"
             )
+        frontend = self.metadata.get("frontend", "pivo-en-v1")
+        if frontend not in FRONTENDS:
+            raise ValueError(f"unsupported text frontend {frontend!r}")
+        self.phonemize, symbols = FRONTENDS[frontend]
+        if tuple(self.metadata.get("symbols", symbols)) != tuple(symbols):
+            raise ValueError("model symbol table does not match the text frontend")
+        self.voices = dict(self.metadata.get("voices", VOICE_IDS))
+        self.default_voice = self.metadata.get("default_voice", next(iter(self.voices)))
         options = ort.SessionOptions()
         options.intra_op_num_threads = threads
         options.inter_op_num_threads = 1
@@ -42,10 +57,11 @@ class Runtime:
             .astype(np.int64)
         )
 
-    def iter_audio(self, text, *, voice="Pi", speed=1.0, chunk_frames=16, overrides=None):
-        if voice not in VOICE_IDS or not 0.5 <= speed <= 2.0 or chunk_frames < 1:
+    def iter_audio(self, text, *, voice=None, speed=1.0, chunk_frames=16, overrides=None):
+        voice = self.default_voice if voice is None else voice
+        if voice not in self.voices or not 0.5 <= speed <= 2.0 or chunk_frames < 1:
             raise ValueError("invalid voice, speed, or chunk size")
-        front = phonemize(text, overrides=overrides)
+        front = self.phonemize(text, overrides=overrides)
         if not any(
             s not in ("<pad>", "<bos>", "<eos>", "<space>", ".", ",", "?", "!", ";", ":")
             for s in front.symbols
@@ -57,7 +73,7 @@ class Runtime:
             None,
             {
                 "tokens": tokens,
-                "voice": np.array([VOICE_IDS[voice]], dtype=np.int64),
+                "voice": np.array([self.voices[voice]], dtype=np.int64),
                 "lengths": np.array([len(front.token_ids)], dtype=np.int64),
             },
         )

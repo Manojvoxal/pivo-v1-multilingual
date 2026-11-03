@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 
 from .runtime import Runtime
-from .text import SPECIAL, phonemize
+from .text import SPECIAL, VOICE_IDS, phonemize
 
 MODEL_FILES = {f"onnx/{name}" for name in (
     "metadata.json", "encoder.onnx", "decoder.onnx", "conditioning.onnx", "vocoder_step.onnx"
@@ -58,14 +58,21 @@ class PiVo:
         self.runtime = Runtime(self.model_dir / "onnx", threads=threads)
         self.sample_rate = self.runtime.metadata["config"]["sample_rate"]
         self.max_chars, self.max_tokens = max_chars, max_tokens
+        self.model_name = self.manifest.get("model_name", "PiVo-1.4M")
+        self.voices = self.runtime.voices
+        self.default_voice = self.runtime.default_voice
+        self.voice_info = self.runtime.metadata.get(
+            "voice_info", {name: {"id": vid, "language": "en"} for name, vid in self.voices.items()})
+        self._phonemize = self.runtime.phonemize
 
     def _validate(self, text, voice, speed, overrides):
         if not isinstance(text, str) or not text.strip():
             raise ValueError("input must contain spoken text")
         if len(text) > self.max_chars:
             raise ValueError(f"input exceeds {self.max_chars} characters; split it into clauses")
-        if voice not in ("Pi", "Vo"):
-            raise ValueError("voice must be Pi or Vo")
+        voices = getattr(self, "voices", VOICE_IDS)
+        if voice not in voices:
+            raise ValueError("voice must be one of: " + ", ".join(voices))
         if not isinstance(speed, (int, float)) or not math.isfinite(speed) or not 0.5 <= speed <= 2:
             raise ValueError("speed must be finite and between 0.5 and 2.0")
         if overrides is not None:
@@ -76,14 +83,16 @@ class PiVo:
                     raise ValueError("invalid pronunciation override")
                 if not all(isinstance(phone, str) for phone in phones):
                     raise ValueError("override phones must be ARPAbet strings")
-        front = phonemize(text, overrides=overrides)
+        front = getattr(self, "_phonemize", phonemize)(text, overrides=overrides)
         if not any(s not in SPECIAL for s in front.symbols):
             raise ValueError("input must contain spoken text")
         if len(front.token_ids) > self.max_tokens:
             raise ValueError(f"input exceeds {self.max_tokens} frontend tokens; split it into clauses")
 
-    def iter_audio(self, text, *, voice="Pi", speed=1.0, overrides=None, chunk_frames=16):
-        """Yield float32, mono 10 ms PCM frames after full-text duration prediction."""
+    def iter_audio(self, text, *, voice=None, speed=1.0, overrides=None, chunk_frames=16):
+        """Yield float32, mono 10 ms PCM frames after full-text duration prediction.
+        voice=None uses the model's default voice (Pi for PiVo-1.4M)."""
+        voice = getattr(self, "default_voice", "Pi") if voice is None else voice
         self._validate(text, voice, speed, overrides)
         if not isinstance(chunk_frames, int) or chunk_frames < 1:
             raise ValueError("chunk_frames must be a positive integer")

@@ -1,4 +1,4 @@
-"""PiVo: compact two-voice English text-to-speech with local ONNX inference."""
+"""PiVo: compact text-to-speech with local ONNX inference (English; Kannada + English with PiVo-KN models)."""
 from .engine import PiVo
 from .runtime import Runtime
 __all__ = ["PiVo", "Runtime"]
