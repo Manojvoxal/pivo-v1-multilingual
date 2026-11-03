@@ -101,8 +101,9 @@ def rasa_download(repo, path, token=None, local_dir="/tmp/rasa"):
                                           local_dir=local_dir), f"download {path}")
 
 
-def rasa_items(local_parquet, wanted, lang):
-    """Yield (gender, item) for rows whose row index is in `wanted` {row: gender}."""
+def rasa_items(local_parquet, wanted, lang, prefix="rasa"):
+    """Yield (gender, item) for rows whose row index is in `wanted` {row: gender}.
+    Works for any HF audio parquet with an `audio` struct and a `text` column."""
     import pyarrow.parquet as pq
     import soundfile as sf
     pf = pq.ParquetFile(local_parquet)
@@ -126,9 +127,39 @@ def rasa_items(local_parquet, wanted, lang):
                 data = open(path, "rb").read()
             audio, sr = sf.read(io.BytesIO(data), dtype="float32")
             fname = rec.get("filename") or rec.get("wav_path") or f"{stem}_{idx:06d}"
-            uid = f"rasa_{lang}_{g}_{safe_id(Path(str(fname)).stem)}"
+            uid = f"{prefix}_{lang}_{g}_{safe_id(Path(str(fname)).stem)}"
             yield g, {"utt_id": uid, "audio": audio, "sr": sr, "text": rec.get("text") or "",
                       "extra": {"style": rec.get("style"), "shard": stem, "row": idx}}
+
+
+def hf_list_parquet(repo, prefix, token=None):
+    from huggingface_hub import HfApi
+    files = _retry(lambda: HfApi(token=token).list_repo_files(repo, repo_type="dataset"),
+                   f"list {repo}")
+    return sorted(f for f in files if f.startswith(prefix) and f.endswith(".parquet"))
+
+
+def iter_parquet_audio(local_parquet, extra_columns=("text",)):
+    """Yield (row, record_without_audio, audio_float32, sr, audio_path) for every row."""
+    import pyarrow.parquet as pq
+    import soundfile as sf
+    pf = pq.ParquetFile(local_parquet)
+    names = pf.schema_arrow.names
+    cols = [c for c in extra_columns if c in names] + ["audio"]
+    row = 0
+    for batch in pf.iter_batches(batch_size=32, columns=cols):
+        for rec in batch.to_pylist():
+            idx = row
+            row += 1
+            a = rec.pop("audio", None) or {}
+            data = a.get("bytes") if isinstance(a, dict) else None
+            if not data:
+                continue
+            try:
+                audio, sr = sf.read(io.BytesIO(data), dtype="float32")
+            except Exception:
+                continue
+            yield idx, rec, audio, sr, (a.get("path") if isinstance(a, dict) else None)
 
 
 # ------------------------------------------------------------------ SYSPIN (Kannada)

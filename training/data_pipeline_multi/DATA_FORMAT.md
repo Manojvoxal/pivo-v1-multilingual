@@ -30,7 +30,7 @@ Ordered by tier, so the default dataset (tiers 1 + 2) uses lang ids 0–11 and v
 
 | id | code | language | script | tier | source |
 |---|---|---|---|---|---|
-| 0 | en | English (Indian) | Latin | 1 | IndicTTS English (IIT Madras); Hi-Fi TTS fallback |
+| 0 | en | English (Indian) | Latin | 1 | SPRINGLab/IndicTTS-English (IIT Madras); Hi-Fi TTS fallback |
 | 1 | kn | Kannada | Kannada | 1 | SYSPIN |
 | 2 | hi | Hindi | Devanagari | 1 | Rasa |
 | 3 | te | Telugu | Telugu | 1 | Rasa |
@@ -57,7 +57,8 @@ Ordered by tier, so the default dataset (tiers 1 + 2) uses lang ids 0–11 and v
 ## Voices (`voices.json`, ids are fixed)
 
 `voice_id = 2 * lang_id + (0 for female, 1 for male)`. Speaker names:
-`en_iitm_tamil_f/m` (or `en_hifi92_f` / `en_hifi6097_m` with `--english hifi`),
+`en_iitm_f/m` (SPRINGLab English talents picked by the scan; `reports/scan/en.json` says which
+cluster), or `en_hifi92_f` / `en_hifi6097_m` with `--english hifi`,
 `kn_syspin_f/m`, `<code>_rasa_f/m` for the rest. `voices.json` lists all 46 ids with a
 `prepared` flag; the default dataset fills ids 0–23.
 

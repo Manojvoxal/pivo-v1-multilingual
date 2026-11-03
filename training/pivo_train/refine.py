@@ -163,7 +163,8 @@ def evaluate(model, loader, device, max_batches):
         if i >= max_batches:
             break
         b = batch_to(batch, device)
-        pred, _ = model(b["tokens"], b["voices"], b["token_lengths"], b["durations"], b["frame_lengths"])
+        pred, _ = model(b["tokens"], b["voices"], b["token_lengths"], b["durations"], b["frame_lengths"],
+                        lang=b.get("lang_ids") if model.langs is not None else None)
         tot += masked_feature_loss(pred, b["features"], b["frame_lengths"]).item()
         n += 1
         fl = b["frame_lengths"]
@@ -197,11 +198,13 @@ def write_samples(model, ds, picked, vocoder, out_dir, device, ceiling_dir=None)
         k = k_of[r["voice_id"]] = k_of.get(r["voice_id"], 0) + 1
         name = f"voice{r['voice_id']}_{r['speaker']}_k{k}"
         tokens = torch.tensor(r["token_ids"], device=device)
-        feats, _ = model.synthesize_features(tokens, r["voice_id"])                       # normal TTS
+        feats, _ = model.synthesize_features(tokens, r["voice_id"],                       # normal TTS
+                                             lang=r.get("lang_id") if model.langs is not None else None)
         write_wav(os.path.join(out_dir, name + "_tts.wav"), vocoder(feats.cpu().numpy()))
         item = collate([ds[idx]])
         b = batch_to(item, device)
-        pred, _ = model(b["tokens"], b["voices"], b["token_lengths"], b["durations"], b["frame_lengths"])
+        pred, _ = model(b["tokens"], b["voices"], b["token_lengths"], b["durations"], b["frame_lengths"],
+                        lang=b.get("lang_ids") if model.langs is not None else None)
         tf = model.denormalize(pred)[0].cpu().numpy()                                     # real timing
         write_wav(os.path.join(out_dir, name + "_tf.wav"), vocoder(tf))
         with open(os.path.join(out_dir, name + ".txt"), "w", encoding="utf-8") as fh:
@@ -217,8 +220,8 @@ def write_samples(model, ds, picked, vocoder, out_dir, device, ceiling_dir=None)
 
 def save_model(path, model, src, step, extra):
     tmp = path + ".tmp"
-    keep = {k: src[k] for k in ("symbols", "voices", "voice_init", "pivo_parent") if k in src}
-    torch.save({"kind": "pivo-acoustic-v1-kn-refined", "step": step, "config": model.config,
+    keep = {k: src[k] for k in ("symbols", "voices", "voice_init", "pivo_parent", "languages") if k in src}
+    torch.save({"kind": ("pivo-acoustic-v1-multi-refined" if model.langs is not None else "pivo-acoustic-v1-kn-refined"), "step": step, "config": model.config,
                 "state_dict": model.state_dict(), **keep, **extra}, tmp)
     os.replace(tmp, path)
 
@@ -322,7 +325,8 @@ def main(argv=None, on_checkpoint=None):
                 break
             b = batch_to(batch, a.device)
             with torch.no_grad():                                   # frozen encoder, real durations
-                enc, _ = model.encode(b["tokens"], b["voices"], b["token_lengths"])
+                enc, _ = model.encode(b["tokens"], b["voices"], b["token_lengths"],
+                                      b.get("lang_ids") if model.langs is not None else None)
                 expanded = model.expand(enc, b["durations"], b["frame_lengths"])
             pred = model.decode(expanded)
             fake_seg, real_seg = random_segments(pred, b["features"], b["frame_lengths"], a.segment, seg_gen)

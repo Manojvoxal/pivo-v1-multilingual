@@ -1,8 +1,13 @@
-"""Stage-1 training (supervised) for the Kannada + English PiVo acoustic model.
+"""Stage-1 training (supervised) for the PiVo acoustic model.
 
-Warm-starts from PiVo's English acoustic.pt, grows the voice table to the number of
-voices in the manifests, initialises Kannada token rows from similar English phones,
-then trains on the manifests produced by the data pipeline:
+Two modes:
+  * --from-scratch (multilingual model, pivo-v1-multilingual): a fresh model of --width,
+    vocab / voices / languages sized from the dataset (symbols.json, max voice_id / lang_id),
+    feature mean/std from manifests/feature_stats.json, language embedding on.
+  * default (PiVo-KN): warm-start from PiVo's English acoustic.pt, grow the voice table and
+    initialise Kannada token rows from similar English phones.
+
+Then trains on the manifests produced by the data pipeline:
 
     loss = SmoothL1(normalized features) + 0.1 * MSE(log durations, log(1 + frames))
 
@@ -26,13 +31,15 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from .data import BucketBatchSampler, PiVoDataset, collate, describe, read_manifest
-from .model import load_pivo_checkpoint, PiVoAcoustic
+from .model import load_pivo_checkpoint, new_model, PiVoAcoustic  # noqa: F401
 
 
 def parse_args(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("--data-root", required=True, help="dataset root containing manifests/")
-    p.add_argument("--pivo-ckpt", required=True, help="PiVo-1.4M checkpoints/acoustic.pt")
+    p.add_argument("--pivo-ckpt", default=None, help="PiVo-1.4M checkpoints/acoustic.pt (warm start)")
+    p.add_argument("--from-scratch", action="store_true", help="multilingual: fresh model, no PiVo weights")
+    p.add_argument("--width", type=int, default=96, help="model width for --from-scratch (96, 112, 128...)")
     p.add_argument("--onnx-dir", default=None, help="PiVo-1.4M onnx/ dir (vocoder for sample WAVs)")
     p.add_argument("--out", required=True)
     p.add_argument("--steps", type=int, default=60000)
@@ -98,7 +105,8 @@ def evaluate(model, loader, args, max_batches):
         if i >= max_batches:
             break
         b = batch_to(batch, args.device)
-        pred, logd = model(b["tokens"], b["voices"], b["token_lengths"], b["durations"], b["frame_lengths"])
+        pred, logd = model(b["tokens"], b["voices"], b["token_lengths"], b["durations"], b["frame_lengths"],
+                           lang=b.get("lang_ids") if model.langs is not None else None)
         f, d = masked_losses(pred, b["features"], b["frame_lengths"], logd, b["durations"], b["token_lengths"])
         tot_f += f.item()
         tot_d += d.item()
@@ -119,9 +127,10 @@ def write_samples(model, rows, vocoder, out_dir, device):
             continue
         seen.add(r["voice_id"])
         tokens = torch.tensor(r["token_ids"], device=device)
-        feats, _ = model.synthesize_features(tokens, r["voice_id"])
+        feats, _ = model.synthesize_features(tokens, r["voice_id"],
+                                             lang=r.get("lang_id") if model.langs is not None else None)
         audio = vocoder(feats.cpu().numpy())
-        name = f"voice{r['voice_id']}_{r['speaker']}"
+        name = f"voice{r['voice_id']:02d}_{r['speaker']}"
         write_wav(os.path.join(out_dir, name + ".wav"), audio)
         with open(os.path.join(out_dir, name + ".txt"), "w", encoding="utf-8") as fh:
             fh.write(r["text"] + "\n")
@@ -131,7 +140,8 @@ def write_samples(model, rows, vocoder, out_dir, device):
 def save(path, model, opt, step, args, extra):
     tmp = path + ".tmp"
     torch.save({
-        "kind": "pivo-acoustic-v1-kn", "step": step, "config": model.config,
+        "kind": "pivo-acoustic-v1-multi" if model.langs is not None else "pivo-acoustic-v1-kn",
+        "step": step, "config": model.config,
         "state_dict": model.state_dict(), "optimizer": opt.state_dict(), "args": vars(args), **extra,
     }, tmp)
     os.replace(tmp, path)
@@ -157,10 +167,26 @@ def main(argv=None, on_checkpoint=None):
         symbols = json.load(fh)["symbols"]
     voices, voice_init = voice_map(train_rows + val_rows)
     print("train:", json.dumps(describe(train_rows), indent=1))
-    print("val clips:", len(val_rows), "| voices:", voices, "| warm-start voice rows from PiVo:", voice_init)
+    print("val clips:", len(val_rows), "| voices:", voices,
+          "" if args.from_scratch else f"| warm-start voice rows from PiVo: {voice_init}")
 
-    model, pivo = load_pivo_checkpoint(args.pivo_ckpt, num_voices=len(voice_init),
-                                       voice_init=voice_init, symbols=symbols)
+    if args.from_scratch:
+        with open(os.path.join(args.data_root, "manifests", "feature_stats.json")) as fh:
+            fstats = json.load(fh)
+        all_rows = train_rows + val_rows
+        n_langs = max(int(r.get("lang_id", 0)) for r in all_rows) + 1
+        vocab = max(len(symbols), json.load(open(os.path.join(args.data_root, "manifests", "symbols.json"),
+                                                 encoding="utf-8")).get("vocab_size", len(symbols)))
+        model = new_model(width=args.width, vocab_size=vocab, num_voices=len(voice_init), num_langs=n_langs,
+                          feature_mean=fstats["mean"], feature_std=fstats["std"], dropout=args.dropout)
+        pivo = {"kind": "from-scratch"}
+        print(f"from scratch: width {args.width}, vocab {vocab}, voices {len(voice_init)}, languages {n_langs}, "
+              f"{sum(p.numel() for p in model.parameters()):,} acoustic params", flush=True)
+    else:
+        if not args.pivo_ckpt:
+            raise SystemExit("--pivo-ckpt is required unless --from-scratch")
+        model, pivo = load_pivo_checkpoint(args.pivo_ckpt, num_voices=len(voice_init),
+                                           voice_init=voice_init, symbols=symbols)
     for m in model.modules():
         if isinstance(m, torch.nn.Dropout):
             m.p = args.dropout
@@ -183,8 +209,9 @@ def main(argv=None, on_checkpoint=None):
     val_loader = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False, collate_fn=collate,
                             num_workers=min(2, args.num_workers))
 
-    decay = [p for n, p in model.named_parameters() if p.dim() >= 2 and "voices" not in n and "tokens" not in n]
-    no_decay = [p for n, p in model.named_parameters() if not (p.dim() >= 2 and "voices" not in n and "tokens" not in n)]
+    emb = ("voices", "tokens", "langs")
+    decay = [p for n, p in model.named_parameters() if p.dim() >= 2 and not any(e in n for e in emb)]
+    no_decay = [p for n, p in model.named_parameters() if not (p.dim() >= 2 and not any(e in n for e in emb))]
     opt = torch.optim.AdamW([{"params": decay, "weight_decay": args.weight_decay},
                              {"params": no_decay, "weight_decay": 0.0}], lr=args.lr, betas=(0.9, 0.98))
 
@@ -222,7 +249,8 @@ def main(argv=None, on_checkpoint=None):
                 g["lr"] = lr_at(step, args)
             b = batch_to(batch, args.device)
             with torch.autocast("cuda", dtype=torch.bfloat16, enabled=args.amp == "bf16" and args.device.startswith("cuda")):
-                pred, logd = model(b["tokens"], b["voices"], b["token_lengths"], b["durations"], b["frame_lengths"])
+                pred, logd = model(b["tokens"], b["voices"], b["token_lengths"], b["durations"], b["frame_lengths"],
+                                   lang=b.get("lang_ids") if model.langs is not None else None)
             f, d = masked_losses(pred.float(), b["features"], b["frame_lengths"], logd.float(), b["durations"], b["token_lengths"])
             loss = f + args.duration_weight * d
             opt.zero_grad(set_to_none=True)

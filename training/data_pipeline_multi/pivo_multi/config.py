@@ -34,8 +34,15 @@ def style_allowed(style, explicit=None):
 
 
 # ------------------------------------------------------------------ English
-# IndicTTS (IIT Madras) English, recorded by the same voice talents as the Indian
-# languages. Upload the unzipped folders to the raw volume (see README):
+# Default source: SPRINGLab/IndicTTS-English on Hugging Face (IIT Madras SPRING Lab's
+# copy of the IndicTTS English recordings: 151k clips, 28 parquet files, ~78 GB, public).
+# It has no speaker column, so the scan stage separates the ~26 voice talents with speaker
+# embeddings + pitch (pivo_multi/speakers.py) and picks the female and the male talent
+# with the most hours (override with --en-speakers after listening to the samples).
+SPRINGLAB_EN_REPO = "SPRINGLab/IndicTTS-English"
+SPRINGLAB_EN_PREFIX = "data/train-"
+
+# Alternative: IndicTTS English zips from IIT Madras uploaded to the raw volume (see README):
 #   modal volume put tts1-raw-datasets <local folder> /english/indictts/tamil_female
 INDICTTS_EN = [
     {"gender": "f", "dir": "/raw/english/indictts/tamil_female", "tag": "tamil"},
@@ -50,14 +57,16 @@ HIFI_EN = [  # fallback / smoke test: American English (already used for PiVo-KN
 SYSPIN_DIR = "/raw/kannada/syspin_hf"
 
 
-def all_speakers(english="indictts"):
+def all_speakers(english="springlab"):
     """Every voice of the full model, in voice-id order."""
     out = []
     for row in LANGS:
         code = row[0]
         for g in ("f", "m"):
             if code == "en":
-                if english == "hifi":
+                if english == "springlab":
+                    spk = {"name": f"en_iitm_{g}", "source": "springlab", "hours": ENGLISH_HOURS_PER_VOICE}
+                elif english == "hifi":
                     src = next(s for s in HIFI_EN if s["gender"] == g)
                     spk = {"name": f"en_hifi{src['key']}_{g}", "source": "hifi", "key": src["key"],
                            "hours": ENGLISH_HOURS_PER_VOICE}
@@ -78,7 +87,7 @@ def all_speakers(english="indictts"):
     return out
 
 
-def active_speakers(phases=DEFAULT_PHASES, english="indictts", langs=None):
+def active_speakers(phases=DEFAULT_PHASES, english="springlab", langs=None):
     """Speakers prepared in this run (voice ids stay those of all_speakers)."""
     return [s for s in all_speakers(english)
             if s["phase"] in phases and (langs is None or s["lang"] in langs)]

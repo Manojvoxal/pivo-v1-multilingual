@@ -52,7 +52,7 @@ def _json_write(path, obj):
 
 
 # --------------------------------------------------------------------------- stage 0 (Rasa)
-def select_rasa(meta_rows, lang, hours_per_voice, styles=None, min_s=1.5, max_s=16.0):
+def select_rasa(meta_rows, lang, hours_per_voice, styles=None, min_s=1.5, max_s=16.0, use_styles=True):
     """Choose Rasa rows for one language from metadata only.
 
     Keeps rows with an allowed style, a plausible duration and text our frontend can
@@ -76,9 +76,9 @@ def select_rasa(meta_rows, lang, hours_per_voice, styles=None, min_s=1.5, max_s=
             if w:
                 scripts[script_of_word(w) or "other"] += 1
         if g is None:
-            drops["unknown_gender"] += 1
+            drops["unknown_gender" if use_styles else "other_speaker"] += 1
             continue
-        if not style_allowed(r["style"], explicit):
+        if use_styles and not style_allowed(r["style"], explicit):
             drops["style_excluded"] += 1
             continue
         if dur is None or not (min_s <= dur <= max_s):

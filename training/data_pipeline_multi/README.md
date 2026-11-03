@@ -26,7 +26,7 @@ Languages are in tiers (`pivo_multi/langs.py`). The default run is tiers 1 + 2:
 |---|---|---|---|
 | Rasa (AI4Bharat, HF `ai4bharat/Rasa`, gated) | the Indian languages except Kannada | 1 F + 1 M each | 12 h per voice, neutral/read styles only |
 | SYSPIN | Kannada | `kn_syspin_f/m` | 14.5 h per voice |
-| IndicTTS English (IIT Madras) | Indian English | Tamil F + Tamil M talents | all (~12 h each) |
+| SPRINGLab/IndicTTS-English (IIT Madras, HF, public) | Indian English | 1 F + 1 M talent, found automatically | up to 13 h each |
 
 Ids are append-only (tier order), so adding tier 3 later never renumbers voices or languages.
 
@@ -44,18 +44,12 @@ Ids are append-only (tier order), so adding tier 3 later never renumbers voices 
    ```
    modal volume create pivo-multi-data --version=2
    ```
-4. **IndicTTS English** (can come later; use `--english hifi` until then):
-   - Download from https://www.iitm.ac.in/donlab/indictts/database (accept the IITM
-     license) the **Tamil female English** and **Tamil male English** sets, or e-mail
-     smtiitm@gmail.com, subject "Indic Database Download Request", body: Language Tamil,
-     Gender Male and Female, Type English.
-   - Listen to a few clips. To use other talents (Assamese F 12.05 h / M 11.30 h,
-     Gujarati M 10.13 h…), edit `INDICTTS_EN` in `pivo_multi/config.py`.
-   - Unzip and upload (any layout with wav files + `txt.done.data` works):
-     ```
-     modal volume put tts1-raw-datasets "C:\path\to\Tamil_female_english" /english/indictts/tamil_female
-     modal volume put tts1-raw-datasets "C:\path\to\Tamil_male_english"   /english/indictts/tamil_male
-     ```
+4. **English** needs nothing: the default source is `SPRINGLab/IndicTTS-English` on Hugging
+   Face (IIT Madras SPRING Lab's public copy of the IndicTTS English recordings). It has no
+   speaker labels, so the scan stage separates the voice talents itself (speaker embeddings +
+   pitch) and picks the female and the male talent with the most hours.
+   Alternatives: `--english hifi` (American Hi-Fi TTS) or `--english indictts` (IITM zips
+   uploaded to `tts1-raw-datasets:/english/indictts/tamil_female|tamil_male`).
 
 ## Run (from this folder)
 
@@ -72,8 +66,16 @@ modal run prepare_pivo_multi.py --smoke
 #    hours per voice x style, scripts, what got selected
 modal run prepare_pivo_multi.py --stage scan --only
 
-# 3) full run (keeps going if the laptop sleeps); add --english hifi if IndicTTS is not uploaded yet
+# 3) full run (keeps going if the laptop sleeps)
 modal run --detach prepare_pivo_multi.py
+
+#    English on its own (speaker scan of SPRINGLab ~10-15 min, then prepare/align/build):
+modal run --detach prepare_pivo_multi.py --langs en
+#    listen to the talents it found, and override the pick if you prefer others:
+modal volume get pivo-multi-data pivo_multi_v1/reports/english_speakers ./en_samples
+modal run --detach prepare_pivo_multi.py --langs en --en-speakers "c07,c12"
+#    when several runs were started separately, merge everything at the end:
+modal run prepare_pivo_multi.py --stage finalize --only
 
 #    or tier-1 languages first:
 modal run --detach prepare_pivo_multi.py --langs kn,en,hi,te,ta,bn

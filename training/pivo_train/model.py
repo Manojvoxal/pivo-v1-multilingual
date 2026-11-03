@@ -1,4 +1,7 @@
-"""PyTorch re-implementation of the PiVo-1.4M acoustic model.
+"""PyTorch re-implementation of the PiVo-1.4M acoustic model, extended for the multilingual
+model (pivo-v1-multilingual): optional language embedding (`num_langs` > 0, added to the
+token + voice embeddings at the encoder input) and `new_model()` to train from scratch at
+any width. With num_langs = 0 the model is exactly PiVo's (tests/test_parity.py).
 
 Rebuilt from the released ONNX graphs (encoder.onnx / decoder.onnx) and the
 `acoustic.pt` checkpoint: parameter names and shapes match the checkpoint's
@@ -28,7 +31,7 @@ CONFIG = {
     "width": 96, "ff_width": 192, "heads": 4, "kv_heads": 2, "text_layers": 6,
     "decoder_layers": 2, "kernel": 5, "duration_width": 64, "feature_dim": 20,
     "attention_window": 64, "dropout": 0.1, "max_token_frames": 200,
-    "max_utterance_frames": 3000, "vocab_size": 128, "num_voices": 2,
+    "max_utterance_frames": 3000, "vocab_size": 128, "num_voices": 2, "num_langs": 0,
 }
 EPS = 1e-6
 ROPE_BASE = 10000.0
@@ -169,6 +172,7 @@ class PiVoAcoustic(nn.Module):
         self.register_buffer("feature_std", torch.ones(c["feature_dim"]))
         self.tokens = nn.Embedding(c["vocab_size"], c["width"])
         self.voices = nn.Embedding(c["num_voices"], c["width"])
+        self.langs = nn.Embedding(c["num_langs"], c["width"]) if c.get("num_langs", 0) > 0 else None
         blocks = []
         dilation = 1
         for i in range(c["text_layers"]):
@@ -186,14 +190,20 @@ class PiVoAcoustic(nn.Module):
         self.phase_projection = nn.Linear(4, c["width"], bias=False)
 
     # ------------------------------------------------------------------ encoder
-    def encode(self, tokens, voice, lengths):
-        """tokens [B,T] long, voice [B] long, lengths [B] long -> (encoded [B,T,96], log_durations [B,T])."""
+    def encode(self, tokens, voice, lengths, lang=None):
+        """tokens [B,T] long, voice [B] long, lengths [B] long, lang [B] long (multilingual
+        model only) -> (encoded [B,T,width], log_durations [B,T])."""
         b, t = tokens.shape
         valid = torch.arange(t, device=tokens.device)[None] < lengths[:, None]       # [B,T]
         mask = valid[..., None].float()
         allowed = valid[:, None, None, :]                                               # key padding
         positions = torch.arange(t, device=tokens.device)
-        x = (self.tokens(tokens) + self.voices(voice)[:, None]) * mask
+        cond = self.voices(voice)
+        if self.langs is not None:
+            if lang is None:
+                raise ValueError("this model has a language embedding: pass lang ids")
+            cond = cond + self.langs(lang)
+        x = (self.tokens(tokens) + cond[:, None]) * mask
         for block in self.text_blocks:
             if isinstance(block, AttentionBlock):
                 x = block(x, allowed, positions) * mask
@@ -239,8 +249,8 @@ class PiVoAcoustic(nn.Module):
             x = block(x, allowed, pos if i == 0 else None)
         return self.feature_head(self.feature_norm(x))
 
-    def forward(self, tokens, voice, token_lengths, durations, frame_lengths):
-        encoded, log_durations = self.encode(tokens, voice, token_lengths)
+    def forward(self, tokens, voice, token_lengths, durations, frame_lengths, lang=None):
+        encoded, log_durations = self.encode(tokens, voice, token_lengths, lang)
         expanded = self.expand(encoded, durations, frame_lengths)
         return self.decode(expanded), log_durations
 
@@ -258,11 +268,12 @@ class PiVoAcoustic(nn.Module):
         return d
 
     @torch.no_grad()
-    def synthesize_features(self, tokens, voice, speed=1.0):
+    def synthesize_features(self, tokens, voice, speed=1.0, lang=None):
         """tokens: 1-D LongTensor for one utterance -> (features [F,20] denormalized, durations)."""
         tokens = tokens[None]
+        lang_t = None if lang is None else torch.tensor([int(lang)], device=tokens.device)
         enc, logd = self.encode(tokens, torch.tensor([voice], device=tokens.device),
-                                torch.tensor([tokens.shape[1]], device=tokens.device))
+                                torch.tensor([tokens.shape[1]], device=tokens.device), lang_t)
         dur = self.predict_durations(logd, tokens, speed)[0]
         expanded = self.expand(enc, dur[None], dur.sum()[None])
         return self.denormalize(self.decode(expanded))[0], dur
@@ -290,6 +301,22 @@ class PiVoAcoustic(nn.Module):
             x = x + block.ff(x)
             new += [k[:, :, -(w - 1):], v[:, :, -(w - 1):]]
         return self.denormalize(self.feature_head(self.feature_norm(x))), new
+
+
+# ---------------------------------------------------------------------------- from scratch
+def new_model(width=96, vocab_size=160, num_voices=24, num_langs=12, feature_mean=None,
+              feature_std=None, dropout=0.1):
+    """Fresh multilingual model. Width scales the attention/feed-forward sizes (4 query heads,
+    2 kv heads, ff = 2 x width); everything else is PiVo's layout. Feature mean/std come from
+    the dataset (manifests/feature_stats.json) and are stored in the checkpoint."""
+    if width % 8:
+        raise ValueError("width must be a multiple of 8 (4 heads with an even RoPE dimension)")
+    model = PiVoAcoustic(config={"width": width, "ff_width": 2 * width, "vocab_size": vocab_size,
+                                 "num_voices": num_voices, "num_langs": num_langs, "dropout": dropout})
+    if feature_mean is not None:
+        model.feature_mean.copy_(torch.as_tensor(feature_mean, dtype=torch.float32))
+        model.feature_std.copy_(torch.as_tensor(feature_std, dtype=torch.float32))
+    return model
 
 
 # ---------------------------------------------------------------------------- warm start

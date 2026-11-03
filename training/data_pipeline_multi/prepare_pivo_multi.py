@@ -6,8 +6,10 @@ on Modal. Successor of pivo-v1/training/data_pipeline/prepare_pivo_v4.py (Kannad
 Sources (see pivo_multi/config.py)
   Indian languages : Rasa (AI4Bharat, Hugging Face `ai4bharat/Rasa`, gated), 1 F + 1 M each
   Kannada          : SYSPIN (already on volume `tts1-raw-datasets` at /kannada/syspin_hf)
-  English          : IndicTTS English (IIT Madras), uploaded to /english/indictts/...
-                     (--english hifi = Hi-Fi TTS speakers 92/6097, used by the smoke test)
+  English          : SPRINGLab/IndicTTS-English on Hugging Face (IIT Madras Indian English,
+                     no speaker labels: the scan stage finds the speakers itself)
+                     (--english indictts = IITM zips uploaded to /english/indictts/...,
+                      --english hifi = Hi-Fi TTS speakers 92/6097, used by the smoke test)
 
 Stages (each can be re-run alone; later stages follow unless --only)
   scan     : Rasa metadata only (no audio download): style/gender/hours report per language
@@ -73,6 +75,17 @@ image = (
         "print('sqlite', sqlite3.sqlite_version); c.serialize()\"",
         "mfa version",
     )
+    .add_local_dir(HERE / "pivo_multi", remote_path="/root/pivo_multi")
+)
+
+# light CPU image for the English speaker scan (resemblyzer speaker encoder ships its weights)
+spk_image = (
+    modal.Image.debian_slim(python_version="3.11")
+    .apt_install("build-essential", "libsndfile1")
+    .pip_install("torch==2.5.1", index_url="https://download.pytorch.org/whl/cpu")
+    .pip_install("resemblyzer==0.1.4", "scikit-learn", "soundfile", "soxr", "pyarrow",
+                 "huggingface_hub>=0.23", "numpy")
+    .env({"PYTHONUNBUFFERED": "1"})
     .add_local_dir(HERE / "pivo_multi", remote_path="/root/pivo_multi")
 )
 
@@ -191,17 +204,136 @@ def check_indictts(dirs: list):
     return out
 
 
+# --------------------------------------------------------------------------- stage 0b: English speakers
+EN_SCAN_SECONDS = 3.0       # embed / pitch-track the first 3 s of each clip
+EN_SAMPLE_EVERY = 400       # keep every Nth clip as a listening sample
+
+
+@app.function(image=spk_image, volumes=VOLS, secrets=[hf_secret], cpu=4, memory=16384,
+              timeout=2 * 3600, max_containers=40, retries=2)
+def embed_english_shard(shard: str, smoke: bool = False, max_rows: int = 0):
+    """SPRINGLab English parquet -> per clip: duration, median F0, speaker embedding, text, path."""
+    import json
+    import shutil
+    import sys
+    import numpy as np
+    sys.path.insert(0, "/root")
+    import soxr
+    from resemblyzer import VoiceEncoder
+    from pivo_multi import config, prep, sources, speakers
+    token = os.environ.get("HF_TOKEN")
+    root = _root(smoke)
+    out_dir = os.path.join(root, "english_scan")
+    stem = Path(shard).stem
+    if os.path.exists(os.path.join(out_dir, stem + ".json")):
+        return {"shard": shard, "cached": True}
+    local = sources.rasa_download(config.SPRINGLAB_EN_REPO, shard, token, local_dir="/tmp/en")
+    enc = VoiceEncoder("cpu", verbose=False)
+    rows, durs, f0s, embs, texts, paths = [], [], [], [], [], []
+    os.makedirs(os.path.join(out_dir, "samples"), exist_ok=True)
+    try:
+        for idx, rec, audio, sr, apath in sources.iter_parquet_audio(local):
+            if max_rows and len(rows) >= max_rows:
+                break
+            if audio.ndim == 2:
+                audio = audio.mean(1)
+            a16 = soxr.resample(audio, sr, 16000) if sr != 16000 else audio
+            head = a16[: int(EN_SCAN_SECONDS * 16000)].astype(np.float32)
+            if len(head) < 8000:
+                continue
+            rows.append(idx)
+            durs.append(len(audio) / sr)
+            f0s.append(speakers.median_f0(head))
+            embs.append(enc.embed_utterance(head))
+            texts.append(rec.get("text") or "")
+            paths.append(apath or "")
+            if idx % EN_SAMPLE_EVERY == 0:
+                clip = np.clip(a16[: 6 * 16000], -1, 1)
+                prep.write_wav(os.path.join(out_dir, "samples", f"{stem}_{idx:06d}.wav"),
+                               (clip * 32767).astype("<i2"))
+    finally:
+        shutil.rmtree("/tmp/en", ignore_errors=True)
+    np.save(os.path.join(out_dir, stem + "_emb.npy"), np.asarray(embs, dtype=np.float16))
+    with open(os.path.join(out_dir, stem + ".json"), "w", encoding="utf-8") as fh:
+        json.dump({"shard": shard, "rows": rows, "durations": durs, "f0": f0s,
+                   "texts": texts, "paths": paths}, fh, ensure_ascii=False)
+    out_vol.commit()
+    return {"shard": shard, "clips": len(rows), "hours": round(sum(durs) / 3600, 2)}
+
+
+@app.function(image=spk_image, volumes=VOLS, secrets=[hf_secret], cpu=8, memory=32768, timeout=2 * 3600)
+def cluster_english(shards: list, hours: float, en_speakers: list = None, smoke: bool = False):
+    """Find the speakers, pick one female + one male voice, write select/en.jsonl."""
+    import json
+    import shutil
+    import numpy as np
+    _setup()
+    from pivo_multi import speakers, stages
+    out_vol.reload()
+    root = _root(smoke)
+    d = os.path.join(root, "english_scan")
+    meta, embs = [], []
+    for shard in shards:
+        stem = Path(shard).stem
+        with open(os.path.join(d, stem + ".json"), encoding="utf-8") as fh:
+            m = json.load(fh)
+        e = np.load(os.path.join(d, stem + "_emb.npy")).astype(np.float32)
+        for i, row in enumerate(m["rows"]):
+            meta.append({"shard": shard, "row": row, "duration": m["durations"][i], "f0": m["f0"][i],
+                         "text": m["texts"][i], "path": m["paths"][i], "filename": f"{stem}_{row:06d}"})
+        embs.append(e)
+    emb = np.concatenate(embs) if embs else np.zeros((0, 256), np.float32)
+    keys = speakers.path_speaker_keys([m["path"] for m in meta])
+    if keys is not None:
+        spk_ids, how, info = keys, "file names", {}
+    else:
+        labels, info = speakers.cluster_embeddings(emb)
+        spk_ids, how = [f"c{l:02d}" for l in labels], "speaker-embedding clusters"
+    summary = speakers.summarize(spk_ids, [m["duration"] for m in meta], [m["f0"] for m in meta],
+                                 [Path(m["shard"]).stem for m in meta])
+    picks = speakers.pick_voices(summary, en_speakers)
+    for m, s in zip(meta, spk_ids):
+        m["speaker"] = s
+        m["gender"] = next((g for g, p in picks.items() if p == s), None)
+        m["style"] = ""
+    selected, report = stages.select_rasa(meta, "en", hours, use_styles=False)
+    report.update(how=how, cluster_info=info, speakers=summary, picks=picks, total_clips=len(meta),
+                  total_hours=round(sum(m["duration"] for m in meta) / 3600, 1))
+    for r in selected:
+        r.pop("path", None)
+    stages._jsonl_write(os.path.join(root, "select", "en.jsonl"), selected)
+    # listening samples: 3 per speaker for the 12 largest speakers
+    lis = os.path.join(root, "reports", "english_speakers")
+    shutil.rmtree(lis, ignore_errors=True)
+    sample_files = set(os.listdir(os.path.join(d, "samples"))) if os.path.isdir(os.path.join(d, "samples")) else set()
+    for s in list(summary)[:12]:
+        got = 0
+        for m in meta:
+            if m["speaker"] != s or got >= 3:
+                continue
+            f = f"{Path(m['shard']).stem}_{m['row']:06d}.wav"
+            if f in sample_files:
+                os.makedirs(os.path.join(lis, f"{s}_{summary[s]['gender']}"), exist_ok=True)
+                shutil.copy(os.path.join(d, "samples", f), os.path.join(lis, f"{s}_{summary[s]['gender']}", f))
+                got += 1
+    stages._json_write(os.path.join(root, "reports", "scan", "en.json"), report)
+    out_vol.commit()
+    return report
+
+
 # --------------------------------------------------------------------------- stage 1: prepare
 @app.function(volumes=VOLS, secrets=[hf_secret], cpu=2, memory=8192, timeout=2 * 3600,
               max_containers=100, retries=2)
-def prepare_rasa_shard(lang: str, shard: str, wanted: dict, speakers: dict, smoke: bool = False):
-    """wanted: {row_index(str): gender}; speakers: {gender: speaker_name}."""
+def prepare_rasa_shard(lang: str, shard: str, wanted: dict, speakers: dict, smoke: bool = False,
+                       repo: str = "", prefix: str = "rasa"):
+    """One Hugging Face parquet file (Rasa, or SPRINGLab English with repo=...).
+    wanted: {row_index(str): gender}; speakers: {gender: speaker_name}."""
     import shutil
     _setup()
     from pivo_multi import config, sources, stages
     token = os.environ.get("HF_TOKEN")
     wanted = {int(k): v for k, v in wanted.items()}
-    local = sources.rasa_download(config.RASA_REPO, shard, token, local_dir=f"/tmp/rasa_{lang}")
+    local = sources.rasa_download(repo or config.RASA_REPO, shard, token, local_dir=f"/tmp/rasa_{lang}")
     tag = f"{lang}_{Path(shard).stem}"
     reports = []
     try:
@@ -209,7 +341,7 @@ def prepare_rasa_shard(lang: str, shard: str, wanted: dict, speakers: dict, smok
             want_g = {k: v for k, v in wanted.items() if v == g}
             if not want_g:
                 continue
-            items = (it for gg, it in sources.rasa_items(local, want_g, lang) if gg == g)
+            items = (it for gg, it in sources.rasa_items(local, want_g, lang, prefix=prefix) if gg == g)
             reports.append(stages.prepare_speaker(items, _root(smoke), name, lang, 1e9, tag=tag))
     finally:
         shutil.rmtree(f"/tmp/rasa_{lang}", ignore_errors=True)
@@ -418,9 +550,15 @@ def cleanup(smoke: bool = False):
 ORDER = ["scan", "prepare", "align", "build", "finalize"]
 
 
-@app.function(volumes=VOLS, timeout=24 * 3600)
+# The orchestrator must not be preempted: a restart would begin again from the scan stage.
+import inspect as _inspect
+_ORCH = {"nonpreemptible": True} if "nonpreemptible" in _inspect.signature(app.function).parameters else {}
+
+
+@app.function(volumes=VOLS, secrets=[hf_secret], timeout=24 * 3600, **_ORCH)
 def pipeline(stage: str = "all", smoke: bool = False, only: bool = False, phases: list = (1, 2),
-             langs: list = None, english: str = "indictts", styles: list = None):
+             langs: list = None, english: str = "springlab", styles: list = None,
+             en_speakers: list = None):
     """Remote orchestrator, so `modal run --detach` keeps going without the laptop."""
     import collections
     import sys
@@ -434,7 +572,8 @@ def pipeline(stage: str = "all", smoke: bool = False, only: bool = False, phases
     if not spks:
         raise RuntimeError("no speakers selected (check --phases / --langs)")
     rasa = [s for s in spks if s["source"] == "rasa"]
-    other = [s for s in spks if s["source"] != "rasa"]
+    en_hf = [s for s in spks if s["source"] == "springlab"]
+    other = [s for s in spks if s["source"] not in ("rasa", "springlab")]
     rasa_langs = sorted({s["lang"] for s in rasa})
     print(f"{len(spks)} voices, languages: {sorted({s['lang'] for s in spks})}", flush=True)
     start = 0 if stage == "all" else ORDER.index(stage)
@@ -453,6 +592,26 @@ def pipeline(stage: str = "all", smoke: bool = False, only: bool = False, phases
                     result["scan"][l] = {"error": f"{type(rep).__name__}: {rep}"}
                 else:
                     result["scan"][l] = rep
+        if en_hf:
+            from pivo_multi import config as _cfg, sources as _src
+            shards = _src.hf_list_parquet(_cfg.SPRINGLAB_EN_REPO, _cfg.SPRINGLAB_EN_PREFIX,
+                                          os.environ.get("HF_TOKEN"))
+            if smoke:
+                shards = shards[:2]
+            print(f"English: speaker scan of {len(shards)} SPRINGLab parquet files", flush=True)
+            embeds = list(embed_english_shard.map(shards, kwargs={"smoke": smoke, "max_rows": 400 if smoke else 0},
+                                                  return_exceptions=True))
+            bad = [e for e in embeds if isinstance(e, Exception)]
+            if bad:
+                raise RuntimeError(f"English speaker scan failed on {len(bad)} files: {bad[:2]}")
+            rep = cluster_english.remote(shards, en_hf[0]["hours"], en_speakers, smoke)
+            result["english"] = rep
+            _print_english(rep)
+            need_en = 0.05 if smoke else 3.0
+            short = {g: v for g, v in rep["selected"].items() if v["hours"] < need_en}
+            if (len(rep["selected"]) < 2 or short) and not only:
+                raise RuntimeError(f"English selection too small: {rep['selected']}; "
+                                   "pick speakers with --en-speakers")
         en = [s for s in other if s["source"] == "indictts"]
         if en:
             result["indictts"] = check_indictts.remote([s["dir"] for s in en])
@@ -490,16 +649,31 @@ def pipeline(stage: str = "all", smoke: bool = False, only: bool = False, phases
                 by_shard[r["shard"]][str(r["row"])] = r["gender"]
             names = {s["gender"]: s["name"] for s in rasa if s["lang"] == l}
             jobs += [(l, shard, wanted, names) for shard, wanted in sorted(by_shard.items())]
+        en_jobs = []
+        if en_hf:
+            from pivo_multi import config as _cfg
+            sel_path = os.path.join(root, "select", "en.jsonl")
+            if not os.path.exists(sel_path):
+                raise RuntimeError(f"no selection file {sel_path}; run --stage scan first")
+            by_shard = collections.defaultdict(dict)
+            for r in stages._jsonl_read(sel_path):
+                by_shard[r["shard"]][str(r["row"])] = r["gender"]
+            names = {s["gender"]: s["name"] for s in en_hf}
+            en_jobs = [("en", shard, wanted, names) for shard, wanted in sorted(by_shard.items())]
         n = _n(smoke, PREP_SHARDS)
         other_jobs = [(s, i, n) for s in other for i in range(n)]
-        print(f"prepare: {len(jobs)} Rasa shard jobs + {len(other_jobs)} SYSPIN/English jobs", flush=True)
+        print(f"prepare: {len(jobs)} Rasa + {len(en_jobs)} English parquet jobs + "
+              f"{len(other_jobs)} SYSPIN/other jobs", flush=True)
         from concurrent.futures import ThreadPoolExecutor
-        with ThreadPoolExecutor(2) as ex:   # both fan-outs at the same time
+        with ThreadPoolExecutor(3) as ex:   # all fan-outs at the same time
             f1 = ex.submit(lambda: list(prepare_shard.starmap(
                 other_jobs, kwargs={"smoke": smoke}, return_exceptions=True)))
             f2 = ex.submit(lambda: list(prepare_rasa_shard.starmap(
                 jobs, kwargs={"smoke": smoke}, return_exceptions=True)))
-            res = f1.result() + f2.result()
+            f3 = ex.submit(lambda: list(prepare_rasa_shard.starmap(
+                en_jobs, kwargs={"smoke": smoke, "repo": _cfg.SPRINGLAB_EN_REPO, "prefix": "iitm"},
+                return_exceptions=True))) if en_jobs else None
+            res = f1.result() + f2.result() + (f3.result() if f3 else [])
         failed = [r for r in res if isinstance(r, Exception)]
         print(f"prepare done at {time.time() - t0:.0f}s; failed jobs: {len(failed)}", flush=True)
         for r in failed[:5]:
@@ -540,6 +714,20 @@ def pipeline(stage: str = "all", smoke: bool = False, only: bool = False, phases
     return result
 
 
+def _print_english(rep):
+    """Speakers found in SPRINGLab English and the two picked voices."""
+    print(f"\n[en] {rep['total_clips']} clips, {rep['total_hours']} h; speakers found by {rep['how']}"
+          f" {rep.get('cluster_info') or ''}", flush=True)
+    for s, v in list(rep["speakers"].items())[:30]:
+        mark = " <- picked" if s in rep["picks"].values() else ""
+        print(f"  {s:12s} {v['gender']}  {v['hours']:6.2f} h  {v['clips']:6d} clips  F0 {v['median_f0']:6.1f} Hz"
+              f"  files {v['n_shards']}{mark}", flush=True)
+    print(f"  dropped: {rep['dropped']}", flush=True)
+    print(f"  SELECTED: {rep['selected']}", flush=True)
+    print("  listen: modal volume get pivo-multi-data pivo_multi_v1/reports/english_speakers ./en_samples",
+          flush=True)
+
+
 def _print_scan(scan):
     """Human-readable scan report (styles x gender hours, selection) in the run log."""
     for lang, rep in sorted(scan.items()):
@@ -556,14 +744,15 @@ def _print_scan(scan):
 
 @app.local_entrypoint()
 def main(stage: str = "all", smoke: bool = False, only: bool = False, phases: str = "1,2",
-         langs: str = "", english: str = "", styles: str = ""):
-    english = english or ("hifi" if smoke else "indictts")
+         langs: str = "", english: str = "", styles: str = "", en_speakers: str = ""):
+    english = english or ("hifi" if smoke else "springlab")
     result = pipeline.remote(
         stage=stage, smoke=smoke, only=only,
         phases=[int(p) for p in phases.split(",") if p.strip()],
         langs=[l.strip() for l in langs.split(",") if l.strip()] or None,
         english=english,
         styles=[s.strip() for s in styles.split(",") if s.strip()] or None,
+        en_speakers=[s.strip() for s in en_speakers.split(",") if s.strip()] or None,
     )
     if not isinstance(result, dict):
         print(result)

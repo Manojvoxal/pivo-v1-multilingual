@@ -75,6 +75,7 @@ class PiVoDataset(Dataset):
             "durations": torch.tensor(r["durations"], dtype=torch.long),
             "voice": int(r["voice_id"]),
             "lang": r["lang"],
+            "lang_id": int(r.get("lang_id", 0)),  # multilingual manifests carry lang_id
             "features": torch.from_numpy((feats - self.mean) / self.std),  # normalized like PiVo
         }
 
@@ -99,6 +100,7 @@ def collate(batch):
         "ids": [x["id"] for x in batch],
         "langs": [x["lang"] for x in batch],
         "voices": torch.tensor([x["voice"] for x in batch], dtype=torch.long),
+        "lang_ids": torch.tensor([x["lang_id"] for x in batch], dtype=torch.long),
         "tokens": tokens, "durations": durations, "features": features,
         "token_lengths": token_lengths, "frame_lengths": frame_lengths,
     }
