@@ -15,3 +15,7 @@ training/runs/
 *.pt
 # files the Claude app saves into this folder
 Claude outputs/
+# web app: build output (web/dist is covered by dist/ above), download cache, test outputs
+web/.cache/
+web/tests/out/
+web/tests/parity_ref.json

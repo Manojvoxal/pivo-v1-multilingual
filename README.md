@@ -23,6 +23,16 @@ pivo voices --model-dir models/PiVo-KN-1.4M
 pivo synthesize --model-dir models/PiVo-KN-1.4M --text "ನಮಸ್ಕಾರ, ನೀವು ಹೇಗಿದ್ದೀರಾ?" --output hello.wav
 ```
 
+### Voxal Studio: try it in the browser
+
+[`web/`](web/README.md) is a website with a **Kannada** and an **English** voice. The model runs in each
+visitor's browser on their own CPU (ONNX Runtime Web), so the server only serves static files.
+
+```bash
+python web/build.py && python web/server.py      # http://localhost:8000
+modal deploy web/modal_app.py                    # public URL on Modal
+```
+
 ## Install
 
 Python 3.11 or newer:
