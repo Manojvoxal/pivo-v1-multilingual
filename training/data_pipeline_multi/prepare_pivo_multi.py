@@ -85,8 +85,10 @@ except TypeError:  # older Modal client: create it yourself with `modal volume c
 VOLS = {"/raw": raw_vol, "/out": out_vol}
 hf_secret = modal.Secret.from_name(HF_SECRET)
 
-# fan-out sizes (MFA and Opus are CPU-only, so many small CPU containers)
-PREP_SHARDS, ALIGN_SHARDS, BUILD_SHARDS = 12, 16, 8   # per speaker / language / speaker
+# Fan-out sizes. Every step here (download, resampling, MFA, Opus feature extraction) is
+# CPU-only, so a GPU would sit idle; speed comes from many CPU containers in parallel.
+# Tuned for wall-clock time over cost (3 Nov 2026).
+PREP_SHARDS, ALIGN_SHARDS, BUILD_SHARDS = 24, 32, 16   # per speaker / language / speaker
 SMOKE_SHARDS = 2
 SMOKE_LANGS = ["en", "kn", "hi", "ta"]
 SMOKE_HOURS = 0.1
@@ -191,7 +193,7 @@ def check_indictts(dirs: list):
 
 # --------------------------------------------------------------------------- stage 1: prepare
 @app.function(volumes=VOLS, secrets=[hf_secret], cpu=2, memory=8192, timeout=2 * 3600,
-              max_containers=48, retries=2)
+              max_containers=100, retries=2)
 def prepare_rasa_shard(lang: str, shard: str, wanted: dict, speakers: dict, smoke: bool = False):
     """wanted: {row_index(str): gender}; speakers: {gender: speaker_name}."""
     import shutil
@@ -215,7 +217,7 @@ def prepare_rasa_shard(lang: str, shard: str, wanted: dict, speakers: dict, smok
     return reports
 
 
-@app.function(volumes=VOLS, cpu=2, memory=8192, timeout=3 * 3600)
+@app.function(volumes=VOLS, secrets=[hf_secret], cpu=2, memory=8192, timeout=3 * 3600)
 def prepare_shard(spk: dict, shard: int, n_shards: int, smoke: bool = False):
     """SYSPIN Kannada / IndicTTS English / Hi-Fi English (one shard of one speaker)."""
     _setup()
@@ -240,7 +242,7 @@ def _mfa_jobs(cpus):
     return max(1, cpus - 1)
 
 
-@app.function(volumes=VOLS, cpu=32, memory=65536, timeout=8 * 3600)
+@app.function(volumes=VOLS, cpu=64, memory=131072, timeout=8 * 3600)
 def align_setup(lang: str, speakers: list, smoke: bool = False):
     """Write the lexicon and get an acoustic model: train one on a subset of this
     language; English first tries PiVo's pretrained english_us_arpa 3.0.0."""
@@ -268,7 +270,7 @@ def align_setup(lang: str, speakers: list, smoke: bool = False):
         stages.copy_corpus_subset(root, lang, stages.pick_training_subset(rows, hours), work)
         os.makedirs(os.path.join(work, "dict"))
         shutil.copy(dict_path, os.path.join(work, "dict", f"{lang}.dict"))
-        stages.run_mfa(work, lang, "train", num_jobs=_mfa_jobs(32), temp_dir="/tmp/mfa_tmp_train")
+        stages.run_mfa(work, lang, "train", num_jobs=_mfa_jobs(64), temp_dir="/tmp/mfa_tmp_train")
         shutil.copy(os.path.join(work, "align", f"{lang}_acoustic_model.zip"), model_dst)
 
     used = "train_subset"
@@ -289,7 +291,7 @@ def align_setup(lang: str, speakers: list, smoke: bool = False):
             stages.copy_corpus_subset(root, lang, [(r["speaker"], r["id"]) for r in rows[:30]], work)
             os.makedirs(os.path.join(work, "dict"))
             shutil.copy(dict_path, os.path.join(work, "dict", f"{lang}.dict"))
-            stages.run_mfa(work, lang, f"pretrained:{found[0]}", num_jobs=_mfa_jobs(32), temp_dir="/tmp/mfa_tmp_chk")
+            stages.run_mfa(work, lang, f"pretrained:{found[0]}", num_jobs=_mfa_jobs(64), temp_dir="/tmp/mfa_tmp_chk")
             ok = 0
             for r in rows[:30]:
                 ali = os.path.join(work, "align", lang, r["speaker"], r["id"] + ".json")
@@ -313,7 +315,7 @@ def align_setup(lang: str, speakers: list, smoke: bool = False):
     return {"lang": lang, "aligner": used, "model": model_dst, "utts": utts}
 
 
-@app.function(volumes=VOLS, cpu=8, memory=16384, timeout=4 * 3600, retries=1)
+@app.function(volumes=VOLS, cpu=16, memory=32768, timeout=4 * 3600, retries=1)
 def align_shard(lang: str, utts: list, model: str, smoke: bool = False):
     import glob
     import shutil
@@ -329,7 +331,7 @@ def align_shard(lang: str, utts: list, model: str, smoke: bool = False):
     shutil.copy(os.path.join(root, "dict", f"{lang}.dict"), os.path.join(work, "dict", f"{lang}.dict"))
     local_model = f"/tmp/{lang}_acoustic_model.zip"
     shutil.copy(model, local_model)
-    stages.run_mfa(work, lang, f"pretrained:{local_model}", num_jobs=_mfa_jobs(8), temp_dir="/tmp/mfa_tmp")
+    stages.run_mfa(work, lang, f"pretrained:{local_model}", num_jobs=_mfa_jobs(16), temp_dir="/tmp/mfa_tmp")
     n = 0
     for src in glob.glob(os.path.join(work, "align", lang, "*", "*.json")):
         spk = os.path.basename(os.path.dirname(src))

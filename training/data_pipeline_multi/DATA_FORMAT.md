@@ -125,3 +125,6 @@ dropped; deterministic 1.5 % val / 1.5 % test split on the normalised-text hash.
 6. Recommended: sample batches balanced by voice (or language) so small voices are not
    drowned out; try width 96 and 128.
 7. The feature cache (`pack.py`) for ~295 h is ~8.5 GB; the training container has 64 GB.
+8. GPU: time matters more than cost, so ask Modal for the fastest first:
+   `GPUS = ["H100", "A100-80GB", "A100"]` (the data pipeline itself is CPU-only and gets
+   its speed from many parallel CPU containers instead).
