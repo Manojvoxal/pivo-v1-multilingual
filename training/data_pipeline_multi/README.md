@@ -1,4 +1,4 @@
-# PiVo multilingual data pipeline (22 Indian languages + English)
+# PiVo multilingual data pipeline (11 major Indian languages + English)
 
 Builds the training set for the new multilingual PiVo model (trained from scratch).
 PiVo-KN-1.4M (Kannada + English) stays a separate model; nothing here touches it.
@@ -12,14 +12,23 @@ PiVo-KN-1.4M (Kannada + English) stays a separate model; nothing here touches it
 
 ## Data plan (from the project plan)
 
-| Dataset | Languages | Voices | Hours used |
+Languages are in tiers (`pivo_multi/langs.py`). The default run is tiers 1 + 2:
+**12 languages, 24 voices, ~295 h**.
+
+| Tier | Languages | Prepared by default? |
+|---|---|---|
+| 1 | English, Kannada, Hindi, Telugu, Tamil, Bengali | yes |
+| 2 | Marathi, Gujarati, Punjabi, Malayalam, Odia, Assamese | yes |
+| 3 | Nepali, Konkani, Maithili, Dogri, Sanskrit (easy to read, niche) | no: add later with `--phases 3` |
+| 4 | Urdu, Kashmiri, Sindhi (Perso-Arabic: short vowels not written), Manipuri, Bodo (unwritten tones), Santali (unverified G2P) | no: dropped for now |
+
+| Dataset | Used for | Voices | Hours used |
 |---|---|---|---|
-| Rasa (AI4Bharat, HF `ai4bharat/Rasa`, gated) | 21 (all except Kannada) | 1 F + 1 M each | 12 h per voice, neutral/read styles only |
+| Rasa (AI4Bharat, HF `ai4bharat/Rasa`, gated) | the Indian languages except Kannada | 1 F + 1 M each | 12 h per voice, neutral/read styles only |
 | SYSPIN | Kannada | `kn_syspin_f/m` | 14.5 h per voice |
 | IndicTTS English (IIT Madras) | Indian English | Tamil F + Tamil M talents | all (~12 h each) |
 
-Phase 3 (Urdu, Kashmiri, Sindhi) is skipped until a Perso-Arabic G2P exists; their
-voice ids are reserved.
+Ids are append-only (tier order), so adding tier 3 later never renumbers voices or languages.
 
 ## One-time setup (your side)
 
@@ -68,10 +77,10 @@ modal run prepare_pivo_multi.py --stage scan --only --styles "BOOK,NEWS,WIKI"
 # 3) full run (keeps going if the laptop sleeps); add --english hifi if IndicTTS is not uploaded yet
 modal run --detach prepare_pivo_multi.py --styles "BOOK,NEWS,WIKI"
 
-#    or phase-1 languages first:
+#    or tier-1 languages first:
 modal run --detach prepare_pivo_multi.py --langs kn,en,hi,te,ta,bn --styles "BOOK,NEWS,WIKI"
-#    and the rest later (finalize merges everything prepared so far):
-modal run --detach prepare_pivo_multi.py --phases 2 --styles "BOOK,NEWS,WIKI"
+#    later, optional tier 3 (finalize merges everything prepared so far):
+modal run --detach prepare_pivo_multi.py --phases 3 --styles "BOOK,NEWS,WIKI"
 
 # resume from a stage / run one stage
 modal run prepare_pivo_multi.py --stage align
@@ -96,5 +105,5 @@ Paste the printed scan table and the final summary back into the chat.
 5. **finalize** caps each voice at its hours, merges manifests, writes symbols / languages /
    voices / feature stats / summary.
 
-Expected scale: ~550 h, ~260k clips. Most of the cost is CPU time (MFA + feature
+Expected scale (tiers 1 + 2): ~295 h, ~150k clips. Most of the cost is CPU time (MFA + feature
 extraction); no GPU.

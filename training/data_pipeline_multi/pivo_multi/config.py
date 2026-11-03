@@ -1,12 +1,14 @@
 """What goes into the multilingual dataset: voices, sources, hours, style filter.
 
-Voice ids are FIXED by the order of `all_speakers()` (all languages, phase 3 included),
-so they never change when a phase is added later. 23 languages x 2 voices = 46 voices.
+Voice ids are FIXED by the order of `all_speakers()` (= the order of langs.LANGS, which is
+append-only and sorted by tier), so they never change when a tier is added later.
+Default run (tiers 1 + 2): 12 languages x 2 voices = 24 voices, ids 0..23.
+All tiers listed: 23 languages, 46 voice ids.
 """
 
 import re
 
-from .langs import LANG, LANGS
+from .langs import DEFAULT_PHASES, LANG, LANGS
 
 # ------------------------------------------------------------------ hours
 RASA_HOURS_PER_VOICE = 12.0       # target after filtering (Rasa has ~22-30 h per voice)
@@ -79,7 +81,7 @@ def all_speakers(english="indictts"):
     return out
 
 
-def active_speakers(phases=(1, 2), english="indictts", langs=None):
+def active_speakers(phases=DEFAULT_PHASES, english="indictts", langs=None):
     """Speakers prepared in this run (voice ids stay those of all_speakers)."""
     return [s for s in all_speakers(english)
             if s["phase"] in phases and (langs is None or s["lang"] in langs)]

@@ -1,5 +1,6 @@
 """
-Build PiVo-ready training data for the multilingual model (22 Indian languages + English)
+Build PiVo-ready training data for the multilingual model (11 major Indian languages + English
+by default; optional tier 3 adds 5 more, tier 4 is dropped for now, see pivo_multi/langs.py)
 on Modal. Successor of pivo-v1/training/data_pipeline/prepare_pivo_v4.py (Kannada + English).
 
 Sources (see pivo_multi/config.py)
@@ -22,7 +23,8 @@ Usage (from this folder):
   modal run prepare_pivo_multi.py --stage scan --only           # look at Rasa styles first (minutes)
   modal run prepare_pivo_multi.py --stage scan --only --styles "BOOK,NEWS,WIKI"   # pin styles
   modal run --detach prepare_pivo_multi.py --styles "BOOK,NEWS,WIKI"              # full run
-  modal run --detach prepare_pivo_multi.py --langs kn,en,hi,te,ta,bn            # phase-1 languages only
+  modal run --detach prepare_pivo_multi.py --langs kn,en,hi,te,ta,bn            # tier-1 languages only
+  modal run --detach prepare_pivo_multi.py --phases 3 --styles "..."           # later: add tier 3 (ne kok mai doi sa)
   modal run prepare_pivo_multi.py --stage build                 # resume from a stage
 Output volume: `pivo-multi-data` (v2), folder /pivo_multi_v1 (smoke: /smoke).
 """

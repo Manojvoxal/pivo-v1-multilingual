@@ -2,8 +2,8 @@
 
 Written by `prepare_pivo_multi.py` to the Modal volume **`pivo-multi-data`** (Volumes v2),
 folder **`/pivo_multi_v1`** (smoke runs: `/smoke`). Same row format as the Kannada + English
-dataset (`pivo-v1/training/data_pipeline/DATA_FORMAT.md`) plus `lang_id`, a new token
-table, 23 languages and 46 voices.
+dataset (`pivo-v1/training/data_pipeline/DATA_FORMAT.md`) plus `lang_id` and a new token
+table. Default content: 12 languages, 24 voices (tiers 1 + 2).
 
 ## Folder layout
 
@@ -12,8 +12,8 @@ pivo_multi_v1/
   manifests/
     train.jsonl  val.jsonl  test.jsonl   one JSON object per utterance (fields below)
     symbols.json                         token table (157 symbols, vocab 160) + MFA phone names
-    languages.json                       23 languages: lang_id, code, name, script, phase
-    voices.json                          46 voices: voice_id, speaker, lang, gender, source, prepared
+    languages.json                       all 23 language ids: lang_id, code, name, script, phase (tier)
+    voices.json                          all 46 voice ids: voice_id, speaker, lang, gender, source, prepared
     feature_stats.json                   per-dim mean/std of the 20 features (balanced over voices)
     summary.json                         hours per language, drop reasons, Opus build
     per_speaker/<speaker>.jsonl          the same rows, split by speaker
@@ -24,9 +24,11 @@ pivo_multi_v1/
   corpus/ meta/ dict/ align/ reports/    intermediate files (training ignores them)
 ```
 
-## Languages (`languages.json`, ids are fixed)
+## Languages (`languages.json`, ids are fixed and append-only)
 
-| id | code | language | script | phase | source |
+Ordered by tier, so the default dataset (tiers 1 + 2) uses lang ids 0–11 and voice ids 0–23.
+
+| id | code | language | script | tier | source |
 |---|---|---|---|---|---|
 | 0 | en | English (Indian) | Latin | 1 | IndicTTS English (IIT Madras); Hi-Fi TTS fallback |
 | 1 | kn | Kannada | Kannada | 1 | SYSPIN |
@@ -35,29 +37,29 @@ pivo_multi_v1/
 | 4 | ta | Tamil | Tamil | 1 | Rasa |
 | 5 | bn | Bengali | Bengali | 1 | Rasa |
 | 6 | mr | Marathi | Devanagari | 2 | Rasa |
-| 7 | ne | Nepali | Devanagari | 2 | Rasa |
-| 8 | kok | Konkani | Devanagari | 2 | Rasa |
-| 9 | mai | Maithili | Devanagari | 2 | Rasa |
-| 10 | doi | Dogri | Devanagari | 2 | Rasa |
-| 11 | brx | Bodo | Devanagari | 2 | Rasa |
-| 12 | sa | Sanskrit | Devanagari | 2 | Rasa |
-| 13 | as | Assamese | Bengali-Assamese | 2 | Rasa |
-| 14 | gu | Gujarati | Gujarati | 2 | Rasa |
-| 15 | pa | Punjabi | Gurmukhi | 2 | Rasa |
-| 16 | or | Odia | Odia | 2 | Rasa |
-| 17 | ml | Malayalam | Malayalam | 2 | Rasa |
-| 18 | mni | Manipuri | Meetei Mayek (or Bengali) | 2 | Rasa |
-| 19 | sat | Santali | Ol Chiki (or Devanagari) | 2 | Rasa |
-| 20 | ur | Urdu | Perso-Arabic | 3 | Rasa (G2P not written yet) |
-| 21 | ks | Kashmiri | Perso-Arabic | 3 | Rasa (G2P not written yet) |
-| 22 | sd | Sindhi | Perso-Arabic | 3 | Rasa (G2P not written yet) |
+| 7 | gu | Gujarati | Gujarati | 2 | Rasa |
+| 8 | pa | Punjabi | Gurmukhi | 2 | Rasa |
+| 9 | ml | Malayalam | Malayalam | 2 | Rasa |
+| 10 | or | Odia | Odia | 2 | Rasa |
+| 11 | as | Assamese | Bengali-Assamese | 2 | Rasa |
+| 12 | ne | Nepali | Devanagari | 3 (optional) | Rasa |
+| 13 | kok | Konkani | Devanagari | 3 (optional) | Rasa |
+| 14 | mai | Maithili | Devanagari | 3 (optional) | Rasa |
+| 15 | doi | Dogri | Devanagari | 3 (optional) | Rasa |
+| 16 | sa | Sanskrit | Devanagari | 3 (optional) | Rasa |
+| 17 | brx | Bodo | Devanagari | 4 (dropped: unwritten tones) | Rasa |
+| 18 | mni | Manipuri | Meetei Mayek / Bengali | 4 (dropped: unwritten tones) | Rasa |
+| 19 | sat | Santali | Ol Chiki | 4 (dropped: G2P unverified) | Rasa |
+| 20 | ur | Urdu | Perso-Arabic | 4 (dropped: no short vowels in script) | Rasa |
+| 21 | ks | Kashmiri | Perso-Arabic | 4 (dropped: no short vowels in script) | Rasa |
+| 22 | sd | Sindhi | Perso-Arabic | 4 (dropped: no short vowels in script) | Rasa |
 
 ## Voices (`voices.json`, ids are fixed)
 
 `voice_id = 2 * lang_id + (0 for female, 1 for male)`. Speaker names:
 `en_iitm_tamil_f/m` (or `en_hifi92_f` / `en_hifi6097_m` with `--english hifi`),
-`kn_syspin_f/m`, `<code>_rasa_f/m` for the rest. 46 voices; ids of languages not
-prepared yet are reserved, so adding phase 3 later never renumbers anything.
+`kn_syspin_f/m`, `<code>_rasa_f/m` for the rest. `voices.json` lists all 46 ids with a
+`prepared` flag; the default dataset fills ids 0–23.
 
 ## Manifest row
 
@@ -111,13 +113,15 @@ dropped; deterministic 1.5 % val / 1.5 % test split on the normalised-text hash.
 
 ## What the trainer has to change (new fork)
 
-1. `CONFIG`: `vocab_size=160`, `num_voices=46`; add `num_langs=23`.
+1. `CONFIG`: `vocab_size=160`; size the tables from the data: `num_voices = max(voice_id) + 1`
+   (24 for tiers 1 + 2), add `num_langs = max(lang_id) + 1` (12). Ids are append-only, so a
+   later tier only needs the two embedding tables grown.
 2. Model: add `self.langs = nn.Embedding(num_langs, width)` and add it next to the voice
-   embedding in `encode()` (`x = tokens + voices + langs`). Cost: 23 × width params.
+   embedding in `encode()` (`x = tokens + voices + langs`). Cost: num_langs × width params.
 3. Data: `PiVoDataset.__getitem__` returns `r["lang_id"]`; `collate` stacks it.
 4. Train from scratch: build `PiVoAcoustic(config)` directly, no `load_pivo_checkpoint`
    (English and Indic share nothing with PiVo's old token rows anymore).
 5. Data root `/data/pivo_multi_v1` on volume `pivo-multi-data`.
 6. Recommended: sample batches balanced by voice (or language) so small voices are not
    drowned out; try width 96 and 128.
-7. The feature cache (`pack.py`) for ~550 h is ~16 GB; the training container has 64 GB.
+7. The feature cache (`pack.py`) for ~295 h is ~8.5 GB; the training container has 64 GB.
