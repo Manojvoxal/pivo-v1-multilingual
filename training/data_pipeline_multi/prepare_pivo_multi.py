@@ -102,6 +102,10 @@ hf_secret = modal.Secret.from_name(HF_SECRET)
 # CPU-only, so a GPU would sit idle; speed comes from many CPU containers in parallel.
 # Tuned for wall-clock time over cost (3 Nov 2026).
 PREP_SHARDS, ALIGN_SHARDS, BUILD_SHARDS = 24, 32, 16   # per speaker / language / speaker
+# Container sizes for MFA. MFA splits its work by speaker, and every language has 2 speakers,
+# so it runs 2 jobs whatever -j says ("MFA will only use 2 jobs"). Small containers, many shards.
+ALIGN_SETUP_CPU, ALIGN_SETUP_MEM = 4, 16384    # per language: train the aligner
+ALIGN_CPU, ALIGN_MEM = 4, 8192                 # per align shard
 SMOKE_SHARDS = 2
 SMOKE_LANGS = ["en", "kn", "hi", "ta"]
 SMOKE_HOURS = 0.1
@@ -331,9 +335,14 @@ def prepare_rasa_shard(lang: str, shard: str, wanted: dict, speakers: dict, smok
     import shutil
     _setup()
     from pivo_multi import config, sources, stages
+    import time
     token = os.environ.get("HF_TOKEN")
     wanted = {int(k): v for k, v in wanted.items()}
+    t0 = time.time()
+    print(f"[{lang}] {shard}: downloading ({len(wanted)} clips wanted)", flush=True)
     local = sources.rasa_download(repo or config.RASA_REPO, shard, token, local_dir=f"/tmp/rasa_{lang}")
+    print(f"[{lang}] {shard}: downloaded {os.path.getsize(local) / 1e9:.2f} GB in {time.time() - t0:.0f}s",
+          flush=True)
     tag = f"{lang}_{Path(shard).stem}"
     reports = []
     try:
@@ -346,6 +355,8 @@ def prepare_rasa_shard(lang: str, shard: str, wanted: dict, speakers: dict, smok
     finally:
         shutil.rmtree(f"/tmp/rasa_{lang}", ignore_errors=True)
     out_vol.commit()
+    print(f"[{lang}] {shard}: done in {time.time() - t0:.0f}s: "
+          + ", ".join(f"{r['speaker']} kept {r['kept']}" for r in reports), flush=True)
     return reports
 
 
@@ -374,14 +385,16 @@ def _mfa_jobs(cpus):
     return max(1, cpus - 1)
 
 
-@app.function(volumes=VOLS, cpu=64, memory=131072, timeout=8 * 3600)
-def align_setup(lang: str, speakers: list, smoke: bool = False):
+@app.function(volumes=VOLS, cpu=ALIGN_SETUP_CPU, memory=ALIGN_SETUP_MEM, timeout=8 * 3600)
+def align_setup(lang: str, speakers: list, smoke: bool = False, reuse: bool = True):
     """Write the lexicon and get an acoustic model: train one on a subset of this
-    language; English first tries PiVo's pretrained english_us_arpa 3.0.0."""
+    language; English first tries PiVo's pretrained english_us_arpa 3.0.0.
+    reuse: keep an aligner a previous (interrupted) run already finished for this language."""
     import glob
     import shutil
     import subprocess
     import sys
+    import zipfile
     sys.path.insert(0, "/root")
     from pivo_multi import prep, stages
     out_vol.reload()
@@ -402,11 +415,13 @@ def align_setup(lang: str, speakers: list, smoke: bool = False):
         stages.copy_corpus_subset(root, lang, stages.pick_training_subset(rows, hours), work)
         os.makedirs(os.path.join(work, "dict"))
         shutil.copy(dict_path, os.path.join(work, "dict", f"{lang}.dict"))
-        stages.run_mfa(work, lang, "train", num_jobs=_mfa_jobs(64), temp_dir="/tmp/mfa_tmp_train")
+        stages.run_mfa(work, lang, "train", num_jobs=_mfa_jobs(ALIGN_SETUP_CPU), temp_dir="/tmp/mfa_tmp_train")
         shutil.copy(os.path.join(work, "align", f"{lang}_acoustic_model.zip"), model_dst)
 
     used = "train_subset"
-    if lang == "en":
+    if reuse and os.path.exists(model_dst) and zipfile.is_zipfile(model_dst):
+        used = "reused (finished earlier)"   # the zip is only copied in after a successful train
+    elif lang == "en":
         try:
             try:
                 subprocess.run(["mfa", "model", "download", "acoustic", "english_us_arpa",
@@ -423,7 +438,7 @@ def align_setup(lang: str, speakers: list, smoke: bool = False):
             stages.copy_corpus_subset(root, lang, [(r["speaker"], r["id"]) for r in rows[:30]], work)
             os.makedirs(os.path.join(work, "dict"))
             shutil.copy(dict_path, os.path.join(work, "dict", f"{lang}.dict"))
-            stages.run_mfa(work, lang, f"pretrained:{found[0]}", num_jobs=_mfa_jobs(64), temp_dir="/tmp/mfa_tmp_chk")
+            stages.run_mfa(work, lang, f"pretrained:{found[0]}", num_jobs=_mfa_jobs(ALIGN_SETUP_CPU), temp_dir="/tmp/mfa_tmp_chk")
             ok = 0
             for r in rows[:30]:
                 ali = os.path.join(work, "align", lang, r["speaker"], r["id"] + ".json")
@@ -447,7 +462,7 @@ def align_setup(lang: str, speakers: list, smoke: bool = False):
     return {"lang": lang, "aligner": used, "model": model_dst, "utts": utts}
 
 
-@app.function(volumes=VOLS, cpu=16, memory=32768, timeout=4 * 3600, retries=1)
+@app.function(volumes=VOLS, cpu=ALIGN_CPU, memory=ALIGN_MEM, timeout=4 * 3600, retries=1)
 def align_shard(lang: str, utts: list, model: str, smoke: bool = False):
     import glob
     import shutil
@@ -463,7 +478,7 @@ def align_shard(lang: str, utts: list, model: str, smoke: bool = False):
     shutil.copy(os.path.join(root, "dict", f"{lang}.dict"), os.path.join(work, "dict", f"{lang}.dict"))
     local_model = f"/tmp/{lang}_acoustic_model.zip"
     shutil.copy(model, local_model)
-    stages.run_mfa(work, lang, f"pretrained:{local_model}", num_jobs=_mfa_jobs(16), temp_dir="/tmp/mfa_tmp")
+    stages.run_mfa(work, lang, f"pretrained:{local_model}", num_jobs=_mfa_jobs(ALIGN_CPU), temp_dir="/tmp/mfa_tmp")
     n = 0
     for src in glob.glob(os.path.join(work, "align", lang, "*", "*.json")):
         spk = os.path.basename(os.path.dirname(src))
@@ -555,10 +570,18 @@ import inspect as _inspect
 _ORCH = {"nonpreemptible": True} if "nonpreemptible" in _inspect.signature(app.function).parameters else {}
 
 
+def _fan(fn, items, kwargs):
+    """starmap that returns [] for no work (Modal's map can wait forever on an empty input)."""
+    items = list(items)
+    if not items:
+        return []
+    return list(fn.starmap(items, kwargs=kwargs, return_exceptions=True))
+
+
 @app.function(volumes=VOLS, secrets=[hf_secret], timeout=24 * 3600, **_ORCH)
 def pipeline(stage: str = "all", smoke: bool = False, only: bool = False, phases: list = (1, 2),
              langs: list = None, english: str = "springlab", styles: list = None,
-             en_speakers: list = None):
+             en_speakers: list = None, retrain_aligners: bool = False):
     """Remote orchestrator, so `modal run --detach` keeps going without the laptop."""
     import collections
     import sys
@@ -664,16 +687,17 @@ def pipeline(stage: str = "all", smoke: bool = False, only: bool = False, phases
         other_jobs = [(s, i, n) for s in other for i in range(n)]
         print(f"prepare: {len(jobs)} Rasa + {len(en_jobs)} English parquet jobs + "
               f"{len(other_jobs)} SYSPIN/other jobs", flush=True)
+        # One fan-out per Modal function (Rasa + English parquet jobs share prepare_rasa_shard,
+        # repo/prefix go per job), and never call starmap on an empty list: an English-only
+        # run used to wait forever on the empty Rasa / SYSPIN maps.
+        parquet_jobs = [(l, sh, w, nm, smoke, "", "rasa") for l, sh, w, nm in jobs]
+        if en_jobs:
+            parquet_jobs += [(l, sh, w, nm, smoke, _cfg.SPRINGLAB_EN_REPO, "iitm") for l, sh, w, nm in en_jobs]
         from concurrent.futures import ThreadPoolExecutor
-        with ThreadPoolExecutor(3) as ex:   # all fan-outs at the same time
-            f1 = ex.submit(lambda: list(prepare_shard.starmap(
-                other_jobs, kwargs={"smoke": smoke}, return_exceptions=True)))
-            f2 = ex.submit(lambda: list(prepare_rasa_shard.starmap(
-                jobs, kwargs={"smoke": smoke}, return_exceptions=True)))
-            f3 = ex.submit(lambda: list(prepare_rasa_shard.starmap(
-                en_jobs, kwargs={"smoke": smoke, "repo": _cfg.SPRINGLAB_EN_REPO, "prefix": "iitm"},
-                return_exceptions=True))) if en_jobs else None
-            res = f1.result() + f2.result() + (f3.result() if f3 else [])
+        with ThreadPoolExecutor(2) as ex:   # both fan-outs at the same time
+            f1 = ex.submit(_fan, prepare_shard, other_jobs, {"smoke": smoke})
+            f2 = ex.submit(_fan, prepare_rasa_shard, parquet_jobs, {})
+            res = f1.result() + f2.result()
         failed = [r for r in res if isinstance(r, Exception)]
         print(f"prepare done at {time.time() - t0:.0f}s; failed jobs: {len(failed)}", flush=True)
         for r in failed[:5]:
@@ -686,7 +710,8 @@ def pipeline(stage: str = "all", smoke: bool = False, only: bool = False, phases
         langs_ = sorted({s["lang"] for s in spks})
         names_by_lang = {l: [s["name"] for s in spks if s["lang"] == l] for l in langs_}
         setups = list(align_setup.starmap([(l, names_by_lang[l]) for l in langs_],
-                                          kwargs={"smoke": smoke}, return_exceptions=True))
+                                          kwargs={"smoke": smoke, "reuse": not retrain_aligners},
+                                          return_exceptions=True))
         jobs = []
         for l, st in zip(langs_, setups):
             if isinstance(st, Exception):
@@ -695,7 +720,7 @@ def pipeline(stage: str = "all", smoke: bool = False, only: bool = False, phases
             n = _n(smoke, ALIGN_SHARDS)
             jobs += [(st["lang"], st["utts"][i::n], st["model"]) for i in range(n) if st["utts"][i::n]]
             print(f"{st['lang']}: aligner {st['aligner']}, {len(st['utts'])} utterances", flush=True)
-        list(align_shard.starmap(jobs, kwargs={"smoke": smoke}, return_exceptions=True))
+        _fan(align_shard, jobs, {"smoke": smoke})
         print(f"align done at {time.time() - t0:.0f}s", flush=True)
 
     if "build" in todo:
@@ -744,7 +769,8 @@ def _print_scan(scan):
 
 @app.local_entrypoint()
 def main(stage: str = "all", smoke: bool = False, only: bool = False, phases: str = "1,2",
-         langs: str = "", english: str = "", styles: str = "", en_speakers: str = ""):
+         langs: str = "", english: str = "", styles: str = "", en_speakers: str = "",
+         retrain_aligners: bool = False):
     english = english or ("hifi" if smoke else "springlab")
     result = pipeline.remote(
         stage=stage, smoke=smoke, only=only,
@@ -753,6 +779,7 @@ def main(stage: str = "all", smoke: bool = False, only: bool = False, phases: st
         english=english,
         styles=[s.strip() for s in styles.split(",") if s.strip()] or None,
         en_speakers=[s.strip() for s in en_speakers.split(",") if s.strip()] or None,
+        retrain_aligners=retrain_aligners,
     )
     if not isinstance(result, dict):
         print(result)

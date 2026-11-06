@@ -1,11 +1,12 @@
 // Web Worker: loads the model once, turns text into audio and streams it to the page.
 //
-// page -> worker  { type: "load" } | { type: "synth", id, text, speed, voice } | { type: "cancel", id }
+// page -> worker  { type: "load" } | { type: "synth", id, text, speed, voice, lang } | { type: "cancel", id }
 //                 | { type: "prefetch" } (load the English dictionary now)
 // worker -> page  progress / ready / dictionary / text / audio / done / cancelled / error
 import * as ort from "./vendor/ort.wasm.min.mjs";
 import { PiVoEngine, MODEL_FILES, SAMPLE_RATE } from "./engine.js";
 import * as frontend from "./frontend.js";
+import * as multi from "./frontend_multi.js";
 
 const MAX_TOKENS = 160;      // tokens per utterance before splitting (about 10-15 s of speech)
 const GAP_SENTENCE = 0.18;   // seconds of silence between sentences
@@ -60,11 +61,12 @@ async function load() {
   const buffers = Object.fromEntries(await Promise.all(files.map(async (f) => [f.key, await fetchWithProgress(f.url, onBytes)])));
   post({ type: "progress", stage: "prepare", fraction: 1 });
   ort.env.wasm.wasmBinary = buffers.wasm;
-  engine = await PiVoEngine.create(ort, buffers);
+  engine = await PiVoEngine.create(ort, buffers, manifest.config || {});
   // warm-up: the first run of each graph is slower, so pay that cost before the user clicks
-  const warm = frontend.phonemize("ನಮಸ್ಕಾರ", { lenient: true }).ids;
-  for await (const _ of engine.stream(warm, manifest.voices[0].index, 1.0, { firstBlock: 4, block: 4 })) break;
-  post({ type: "ready", seconds: (performance.now() - t0) / 1000, voices: manifest.voices.map((v) => v.id) });
+  const warmVoice = manifest.voices.find((v) => v.language === "kn") || manifest.voices[0];
+  const warm = multi.phonemize("ನಮಸ್ಕಾರ", "kn").ids;
+  for await (const _ of engine.stream(warm, warmVoice.index, 1.0, { firstBlock: 4, block: 4, lang: warmVoice.lang_id })) break;
+  post({ type: "ready", seconds: (performance.now() - t0) / 1000, voices: manifest.voices });
   // fetch the English dictionary in the background so code-mixed text is instant later
   setTimeout(() => ensureLexicon().catch(() => {}), 1500);
 }
@@ -83,20 +85,23 @@ function ensureLexicon() {
   return lexiconPromise;
 }
 
-const voiceIndex = (id) => (manifest.voices.find((v) => v.id === id) || manifest.voices[0]).index;
+const findVoice = (id) => manifest.voices.find((v) => v.id === id) || manifest.voices[0];
 
-async function synth({ id, text, speed, voice }) {
+async function synth({ id, text, speed, voice, lang }) {
   if (cancelled.has(id)) return post({ type: "cancelled", id });
   const t0 = performance.now();
-  if (frontend.lexiconNeeded(text) && !frontend.lexiconLoaded()) {
+  const v = findVoice(voice);
+  lang = lang || v.language;
+  const langId = manifest.languages?.[lang] ?? v.lang_id ?? 0;
+  if (multi.lexiconNeeded(text, lang) && !frontend.lexiconLoaded()) {
     post({ type: "status", id, message: "Loading the English dictionary…" });
     await ensureLexicon();
   }
-  const front = frontend.phonemize(text, { lenient: true });
+  const front = multi.phonemize(text, lang);
   const chunks = frontend.splitUtterances(front.ids, MAX_TOKENS);
   const phones = chunks.reduce((n, c) => n + c.filter((t) => t >= 10).length, 0);
   const estimate = (phones * 0.075) / speed + (chunks.length - 1) * GAP_SENTENCE;
-  post({ type: "text", id, normalized: front.normalized, skipped: [...new Set(front.skipped)],
+  post({ type: "text", id, lang, normalized: front.normalized, skipped: [...new Set(front.skipped)],
     unknown: [...new Set(front.unknown)], chunks: chunks.length, estimate });
   if (!chunks.length) return post({ type: "done", id, empty: true });
 
@@ -110,7 +115,7 @@ async function synth({ id, text, speed, voice }) {
       samples += silence.length;
       post({ type: "audio", id, pcm: silence }, [silence.buffer]);
     }
-    for await (const pcm of engine.stream(chunks[c], voiceIndex(voice), speed, { stop })) {
+    for await (const pcm of engine.stream(chunks[c], v.index, speed, { stop, lang: langId })) {
       if (firstAudio === null) firstAudio = performance.now() - t0;
       samples += pcm.length;
       post({ type: "audio", id, pcm }, [pcm.buffer]);

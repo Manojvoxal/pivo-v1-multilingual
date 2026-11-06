@@ -1,6 +1,6 @@
 """Deploy Voxal Studio on Modal.
 
-Modal only serves static files: the PiVo-KN model runs in each visitor's browser, on their
+Modal only serves static files: the multilingual PiVo model runs in each visitor's browser, on their
 own CPU. There is no GPU and no inference server, so one small CPU container handles many
 visitors and costs very little.
 
@@ -29,7 +29,8 @@ image = (
     .add_local_dir(DIST, remote_path="/site")
 )
 
-app = modal.App("voxal-studio", image=image)
+# its own app + URL, so the Kannada + English site (pivo-v1, app "voxal-studio") keeps running
+app = modal.App("voxal-studio-multi", image=image)
 
 
 @app.function(
@@ -40,7 +41,7 @@ app = modal.App("voxal-studio", image=image)
     scaledown_window=15 * 60,
 )
 @modal.concurrent(max_inputs=200)
-@modal.asgi_app(label="voxal-studio")
+@modal.asgi_app(label="voxal-studio-multi")
 def web():
     from voxal_server import StaticSite
 

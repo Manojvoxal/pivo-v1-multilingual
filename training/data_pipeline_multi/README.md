@@ -7,8 +7,10 @@ PiVo-KN-1.4M (Kannada + English) stays a separate model; nothing here touches it
 |---|---|
 | `prepare_pivo_multi.py` | Modal app: scan → prepare → align → build → finalize |
 | `pivo_multi/` | frontend (G2P for all scripts), sources, stages, config |
+| `pivo_multi/numnorm.py`, `numwords.json` | number reader for inference (hi mr gu pa bn or as ta te ml): numbers, dates, years, times, money, %, units, ordinals, suffixes, acronyms, symbols; `frontend.phonemize(text, lang, strict=False, numbers=True)` |
+| `NUMBER_REVIEW.xlsx` | every number-word choice per language, for native speakers to confirm or correct |
 | `DATA_FORMAT.md` | what the trainer reads + the trainer changes needed |
-| `tests/` | G2P tests (73) + offline end-to-end test with fake data |
+| `tests/` | G2P tests (73), number reader tests, offline end-to-end test with fake data |
 
 ## Data plan (from the project plan)
 
@@ -108,3 +110,18 @@ Paste the printed scan table and the final summary back into the chat.
 
 Expected scale (tiers 1 + 2): ~295 h, ~150k clips. Most of the cost is CPU time (MFA + feature
 extraction); no GPU.
+
+## Reading numbers (inference only)
+
+Training text has no digits (clips with digits are dropped), so the model never needs a number
+reader for training. At inference the web app and `frontend.phonemize(..., numbers=True)` write
+numbers out as words first: Kannada and English with PiVo's own readers, the other ten languages
+with `pivo_multi/numnorm.py` (formal / news style, same rule order as PiVo's Kannada reader).
+
+The words live in `pivo_multi/numwords.json`, one block per language: 0-99, hundreds, thousand /
+lakh / crore forms (with Tamil / Malayalam sandhi and Telugu oblique forms), years, months, clock,
+currency, units, ordinals, letter names, abbreviations. 0-99 come from Unicode CLDR 49 (AI4Bharat
+indic-numtowords for Odia and Assamese) with the fixes listed in `NUMBER_REVIEW.xlsx`. Changing a
+word needs no retraining: edit the JSON, run `pytest tests/test_numnorm.py`, rebuild the site
+(`python web/build.py` copies it into `web/app/numwords.js`). A rule change in `numnorm.py` must be
+made in `web/app/numbers_multi.js` too (see `web/tests/numbers_parity.mjs`).

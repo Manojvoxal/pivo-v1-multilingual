@@ -1,7 +1,14 @@
-"""Export a trained Kannada + English acoustic checkpoint to PiVo's ONNX runtime format.
+"""Export a trained acoustic checkpoint to PiVo's ONNX runtime format.
 
+    PiVo-KN (Kannada + English):
     python export_onnx.py --ckpt runs/kn_en_v1_refine/refined.pt \
         --pivo-dir ../models/PiVo-1.4M --out ../models/PiVo-KN-1.4M
+
+    Multilingual (checkpoint kind pivo-acoustic-v1-multi*, 12 languages, 24 voices): the encoder
+    gets a fourth input `lang` (int64 [batch], the language id of the text, see metadata
+    "language_ids"); voices are named <lang>_<f|m>. On Modal: `modal run train_gpu.py --stage export`.
+    python export_onnx.py --ckpt runs/multi_w128_refine/refined.pt --pivo-dir ../models/PiVo-1.4M \
+        --cmudict ../src/pivo/resources/cmudict.dict --out ../models/PiVo-Multi-1.8M
 
 Writes a model folder with the same layout and contract as PiVo-1.4M, so the existing
 runtime (src/pivo) can load it:
@@ -32,6 +39,7 @@ import torch.nn as nn
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, "data_pipeline"))
+sys.path.insert(0, os.path.join(HERE, "data_pipeline_multi"))
 from pivo_train.model import PiVoAcoustic, phase_features  # noqa: E402
 
 CACHE_NAMES = ["key0", "value0", "key1", "value1"]
@@ -45,6 +53,21 @@ TEST_TEXT = [
     ("kn", "ಸ್ವಲ್ಪ ಬಾಯಿ ಉಗ್ಗಾದರೆ ಏನಂತೆ? ದುಂಡುಮುಖ, ಬಿಳಿ ಮೈ, ಕಣ್ಣು ಮೂಗು ಬಾಯಿ ಕಿವಿ ಎಲ್ಲಾ ನೆಟ್ಟಗಿಲ್ಲೇನು?"),
     ("kn", "ನನ್ನ phone ಎಲ್ಲಿದೆ ಎಂದು ಹೇಳಿ."),
 ]
+# multilingual parity sentences (one per language; all pass the strict training frontend)
+MULTI_TEST_TEXT = {
+    "en": "Hello, my name is Vo. How many parameters does a voice need?",
+    "kn": "ನಮಸ್ಕಾರ, ನೀವು ಹೇಗಿದ್ದೀರಾ?",
+    "hi": "नमस्ते, आप कैसे हैं?",
+    "te": "నమస్కారం, మీరు ఎలా ఉన్నారు?",
+    "ta": "வணக்கம், நீங்கள் எப்படி இருக்கிறீர்கள்?",
+    "bn": "নমস্কার, আপনি কেমন আছেন?",
+    "mr": "नमस्कार, तुम्ही कसे आहात?",
+    "gu": "નમસ્તે, તમે કેમ છો?",
+    "pa": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਤੁਸੀਂ ਕਿਵੇਂ ਹੋ?",
+    "ml": "നമസ്കാരം, സുഖമാണോ?",
+    "or": "ନମସ୍କାର, ଆପଣ କେମିତି ଅଛନ୍ତି?",
+    "as": "নমস্কাৰ, আপুনি কেনে আছে?",
+}
 
 
 class EncoderGraph(nn.Module):
@@ -54,6 +77,15 @@ class EncoderGraph(nn.Module):
 
     def forward(self, tokens, voice, lengths):
         return self.model.encode(tokens, voice, lengths)
+
+
+class MultiEncoderGraph(nn.Module):
+    def __init__(self, model):
+        super().__init__()
+        self.model = model
+
+    def forward(self, tokens, voice, lang, lengths):
+        return self.model.encode(tokens, voice, lengths, lang=lang)
 
 
 class DecoderGraph(nn.Module):
@@ -76,12 +108,18 @@ def sha256(path):
 
 def export(model, onnx_dir):
     tokens = torch.tensor([[1, 21, 38, 25, 40, 3, 62, 32, 4, 2]])
+    dyn_enc = {"tokens": {0: "batch", 1: "tokens"}, "voice": {0: "batch"}, "lengths": {0: "batch"},
+               "encoded": {0: "batch", 1: "tokens"}, "log_durations": {0: "batch", 1: "tokens"}}
+    if model.langs is not None:
+        graph, args, names = (MultiEncoderGraph(model), (tokens, torch.tensor([0]), torch.tensor([0]),
+                              torch.tensor([tokens.shape[1]])), ["tokens", "voice", "lang", "lengths"])
+        dyn_enc["lang"] = {0: "batch"}
+    else:
+        graph, args, names = (EncoderGraph(model), (tokens, torch.tensor([0]), torch.tensor([tokens.shape[1]])),
+                              ["tokens", "voice", "lengths"])
     torch.onnx.export(
-        EncoderGraph(model).eval(), (tokens, torch.tensor([0]), torch.tensor([tokens.shape[1]])),
-        os.path.join(onnx_dir, "encoder.onnx"), dynamo=False, opset_version=17,
-        input_names=["tokens", "voice", "lengths"], output_names=["encoded", "log_durations"],
-        dynamic_axes={"tokens": {0: "batch", 1: "tokens"}, "voice": {0: "batch"}, "lengths": {0: "batch"},
-                      "encoded": {0: "batch", 1: "tokens"}, "log_durations": {0: "batch", 1: "tokens"}})
+        graph.eval(), args, os.path.join(onnx_dir, "encoder.onnx"), dynamo=False, opset_version=17,
+        input_names=names, output_names=["encoded", "log_durations"], dynamic_axes=dyn_enc)
     c = model.config
     hd = c["width"] // c["heads"]
     caches = [torch.zeros(1, c["kv_heads"], 5, hd) for _ in CACHE_NAMES]
@@ -97,22 +135,30 @@ def export(model, onnx_dir):
     model.eval()  # the exporter restores the wrapper's train/eval flag onto the model; force eval for checks
 
 
-def check(model, onnx_dir, token_sets, voices):
-    """Max abs difference between ONNX and PyTorch for encoder, durations and features."""
+def check(model, onnx_dir, token_sets, voices, cases=None):
+    """Max abs difference between ONNX and PyTorch for encoder, durations and features.
+    cases: optional explicit [(token_ids, voice, lang)] (multilingual); default = every token
+    set with every voice."""
     import onnxruntime as ort
     enc = ort.InferenceSession(os.path.join(onnx_dir, "encoder.onnx"), providers=["CPUExecutionProvider"])
     dec = ort.InferenceSession(os.path.join(onnx_dir, "decoder.onnx"), providers=["CPUExecutionProvider"])
     c = model.config
     hd = c["width"] // c["heads"]
     worst = {"encoder": 0.0, "log_durations": 0.0, "decoder": 0.0}
-    for toks in token_sets:
-        for voice in voices:
+    if cases is None:
+        cases = [(toks, voice, None) for toks in token_sets for voice in voices]
+    for toks, voice, lang in cases:
+        if True:  # (kept the old two-level indentation)
             tokens = np.array([toks], dtype=np.int64)
-            o_enc, o_logd = enc.run(None, {"tokens": tokens, "voice": np.array([voice], np.int64),
-                                           "lengths": np.array([len(toks)], np.int64)})
+            feeds = {"tokens": tokens, "voice": np.array([voice], np.int64),
+                     "lengths": np.array([len(toks)], np.int64)}
+            if lang is not None:
+                feeds["lang"] = np.array([lang], np.int64)
+            o_enc, o_logd = enc.run(None, feeds)
             with torch.no_grad():
                 t_enc, t_logd = model.encode(torch.from_numpy(tokens), torch.tensor([voice]),
-                                             torch.tensor([len(toks)]))
+                                             torch.tensor([len(toks)]),
+                                             lang=None if lang is None else torch.tensor([lang]))
             worst["encoder"] = max(worst["encoder"], float(np.abs(t_enc.numpy() - o_enc).max()))
             worst["log_durations"] = max(worst["log_durations"], float(np.abs(t_logd.numpy() - o_logd).max()))
             dur = model.predict_durations(torch.from_numpy(o_logd), torch.from_numpy(tokens))[0]
@@ -137,23 +183,39 @@ def main(argv=None):
     ap.add_argument("--ckpt", required=True, help="refined.pt (or a stage-1 best.pt)")
     ap.add_argument("--pivo-dir", required=True, help="PiVo-1.4M folder (for the unchanged vocoder graphs)")
     ap.add_argument("--out", required=True, help="new model folder, e.g. models/PiVo-KN-1.4M")
-    ap.add_argument("--name", default="PiVo-KN-1.4M")
+    ap.add_argument("--name", default=None, help="default: PiVo-KN-1.4M, or PiVo-Multi-<size>M")
     ap.add_argument("--default-voice", default="kn_f")
+    ap.add_argument("--cmudict", default=None, help="default: <pivo-dir>/pivo/resources/cmudict.dict")
     ap.add_argument("--tol", type=float, default=2e-4)
     a = ap.parse_args(argv)
-
-    from pivo_kn_v3.frontend import phonemize
-    from pivo_kn_v3 import english
-    english.set_cmudict_path(os.path.join(a.pivo_dir, "pivo", "resources", "cmudict.dict"))
 
     ck = torch.load(a.ckpt, map_location="cpu", weights_only=False)
     model = PiVoAcoustic(config=ck["config"])
     model.load_state_dict(ck["state_dict"], strict=True)
     model.eval()
+    multi = model.langs is not None
+    cmudict = a.cmudict or os.path.join(a.pivo_dir, "pivo", "resources", "cmudict.dict")
+    if multi:
+        from pivo_multi.frontend import phonemize
+        from pivo_multi import english
+        from pivo_multi.langs import LANG, LANG_TO_ID
+    else:
+        from pivo_kn_v3.frontend import phonemize
+        from pivo_kn_v3 import english
+    english.set_cmudict_path(cmudict)
+
     symbols = list(ck["symbols"])
     voices_ck = {int(k): tuple(v) for k, v in ck["voices"].items()}
-    names = {DEFAULT_VOICE_NAMES.get(spk, spk): vid for vid, (spk, _) in sorted(voices_ck.items())}
-    voice_info = {DEFAULT_VOICE_NAMES.get(spk, spk): {"id": vid, "speaker": spk, "language": lang}
+    if multi:  # en_iitm_f -> en_f, kn_syspin_m -> kn_m, hi_rasa_f -> hi_f
+        short = lambda spk, lang: f"{lang}_{spk.rsplit('_', 1)[-1]}"
+        for vid, (spk, lang) in voices_ck.items():
+            if vid // 2 != LANG_TO_ID[lang]:
+                raise SystemExit(f"voice {vid} ({spk}) does not sit at 2*lang_id of {lang}")
+    else:
+        short = lambda spk, lang: DEFAULT_VOICE_NAMES.get(spk, spk)
+    names = {short(spk, lang): vid for vid, (spk, lang) in sorted(voices_ck.items())}
+    voice_info = {short(spk, lang): {"id": vid, "speaker": spk, "language": lang,
+                                     **({"lang_id": LANG_TO_ID[lang]} if multi else {})}
                   for vid, (spk, lang) in sorted(voices_ck.items())}
     if a.default_voice not in names:
         raise SystemExit(f"--default-voice must be one of {sorted(names)}")
@@ -164,13 +226,22 @@ def main(argv=None):
     for n in ("conditioning.onnx", "vocoder_step.onnx"):
         shutil.copyfile(os.path.join(a.pivo_dir, "onnx", n), os.path.join(onnx_dir, n))
 
-    token_sets = []
-    for lang, text in TEST_TEXT:
+    token_sets, cases = [], None
+    texts = list(TEST_TEXT) if not multi else list(MULTI_TEST_TEXT.items())
+    toks_by_lang = {}
+    for lang, text in texts:
         front = phonemize(text, lang)
         if [symbols[i] for i in front.token_ids] != list(front.symbols):
             raise SystemExit("checkpoint symbol table does not match the frontend")
         token_sets.append(list(front.token_ids))
-    worst = check(model, onnx_dir, token_sets, sorted(voices_ck))
+        toks_by_lang[lang] = list(front.token_ids)
+    if multi:  # every voice: its own language's sentence + the English one
+        cases = []
+        for vid, (spk, lang) in sorted(voices_ck.items()):
+            cases.append((toks_by_lang[lang], vid, LANG_TO_ID[lang]))
+            if lang != "en":
+                cases.append((toks_by_lang["en"], vid, LANG_TO_ID["en"]))
+    worst = check(model, onnx_dir, token_sets, sorted(voices_ck), cases)
     print("ONNX vs PyTorch max abs diff:", {k: f"{v:.2e}" for k, v in worst.items()})
     if max(worst.values()) > a.tol:
         raise SystemExit(f"PARITY FAILED (tol {a.tol})")
@@ -179,14 +250,23 @@ def main(argv=None):
         base = json.load(fh)
     acoustic = sum(p.numel() for p in model.parameters())
     vocoder = base["parameters"]["components"]["vocoder"]["parameters"]
+    if a.name is None:
+        a.name = f"PiVo-Multi-{(acoustic + vocoder) / 1e6:.1f}M" if multi else "PiVo-KN-1.4M"
     meta = dict(base)
+    # the acoustic model's own sizes (width 128 has head_dim 32, not PiVo's 24); vocoder keys stay
+    meta["config"] = dict(base["config"], **{k: v for k, v in model.config.items() if k != "dropout"})
+    meta["config"]["head_dim"] = model.config["width"] // model.config["heads"]
+    langs_used = sorted({lang for _, lang in voices_ck.values()}, key=lambda c: LANG_TO_ID[c]) if multi else ["en", "kn"]
     meta.update({
         "symbols": symbols,
         "voices": names,
         "voice_info": voice_info,
         "default_voice": a.default_voice,
-        "languages": ["en", "kn"],
-        "frontend": "pivo-kn-en-v1",
+        "languages": langs_used,
+        "frontend": "pivo-multi-v1" if multi else "pivo-kn-en-v1",
+        **({"language_ids": {c: LANG_TO_ID[c] for c in langs_used},
+            "language_names": {c: LANG[c]["name"] or "English" for c in langs_used},
+            "encoder_inputs": ["tokens", "voice", "lang", "lengths"]} if multi else {}),
         "source_checkpoint": {"file": os.path.basename(a.ckpt), "sha256": sha256(a.ckpt),
                               "kind": ck.get("kind"), "step": ck.get("step")},
     })

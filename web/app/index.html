@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Voxal Studio · Kannada and English Text to Speech</title>
-  <meta name="description" content="Type Kannada or English and hear it spoken. Voxal's voices run entirely on your own computer, in the browser.">
+  <title>Voxal Studio · Text to Speech in 12 Indian Languages</title>
+  <meta name="description" content="Type in Kannada, Hindi, Tamil, Telugu, Bengali, Marathi, Gujarati, Punjabi, Malayalam, Odia, Assamese or English and hear it spoken. Voxal's voices run entirely on your own computer, in the browser.">
   <meta name="theme-color" content="#ffffff">
   <link rel="icon" href="favicon.svg?v=__VERSION__" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Noto+Sans+Kannada:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Noto+Sans+Kannada:wght@400;500;600&family=Noto+Sans+Devanagari:wght@400;500;600&family=Noto+Sans+Bengali:wght@400;500;600&family=Noto+Sans+Tamil:wght@400;500;600&family=Noto+Sans+Telugu:wght@400;500;600&family=Noto+Sans+Gujarati:wght@400;500;600&family=Noto+Sans+Gurmukhi:wght@400;500;600&family=Noto+Sans+Malayalam:wght@400;500;600&family=Noto+Sans+Oriya:wght@400;500;600&display=swap">
   <link rel="stylesheet" href="styles.css?v=__VERSION__">
   <link rel="modulepreload" href="main.js?v=__VERSION__">
   <script type="module" src="main.js?v=__VERSION__"></script>
@@ -47,7 +47,7 @@
           <span class="device-title" id="status-title">Loading model…</span>
         </div>
         <div class="meter" aria-hidden="true"><div class="meter-fill" id="load-meter"></div></div>
-        <p class="device-note" id="status-note">One-time download of about 9 MB. After that it opens instantly.</p>
+        <p class="device-note" id="status-note">One-time download of about 10 MB. After that it opens instantly.</p>
       </div>
     </aside>
 
@@ -64,14 +64,31 @@
 
       <section class="card editor" aria-label="Text">
         <div class="editor-top">
-          <label class="speaker-chip">
-            <span class="avatar" id="chip-avatar" aria-hidden="true">ಕ</span>
-            <select id="voice-select" aria-label="Language">
-              <option value="kn">Kannada</option>
+          <div class="chips">
+            <label class="speaker-chip">
+              <span class="avatar" id="chip-avatar" aria-hidden="true">ಕ</span>
+              <select id="lang-chip" aria-label="Language">
+              <option value="kn">Kannada · ಕನ್ನಡ</option>
               <option value="en">English</option>
-            </select>
-            <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg>
-          </label>
+              <option value="as">Assamese · অসমীয়া</option>
+              <option value="bn">Bengali · বাংলা</option>
+              <option value="gu">Gujarati · ગુજરાતી</option>
+              <option value="hi">Hindi · हिन्दी</option>
+              <option value="ml">Malayalam · മലയാളം</option>
+              <option value="mr">Marathi · मराठी</option>
+              <option value="or">Odia · ଓଡ଼ିଆ</option>
+              <option value="pa">Punjabi · ਪੰਜਾਬੀ</option>
+              <option value="ta">Tamil · தமிழ்</option>
+              <option value="te">Telugu · తెలుగు</option>
+              </select>
+              <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg>
+            </label>
+            <label class="speaker-chip voice-chip">
+              <svg class="chip-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>
+              <select id="voice-chip" aria-label="Voice"></select>
+              <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg>
+            </label>
+          </div>
         </div>
 
         <label class="sr-only" for="text">Text to read aloud</label>
@@ -129,16 +146,33 @@
     <aside class="panel" aria-label="Settings">
       <h2 class="panel-title">Settings</h2>
 
-      <fieldset class="field">
-        <legend class="field-label">Language</legend>
-        <div class="segmented">
-          <label><input type="radio" name="lang" value="kn" checked><span>Kannada <span class="seg-native kn">ಕನ್ನಡ</span></span></label>
-          <label><input type="radio" name="lang" value="en"><span>English</span></label>
+      <div class="field">
+        <label class="field-label" for="lang-select">Language</label>
+        <div class="select-box kn">
+          <select id="lang-select">
+              <option value="kn">Kannada · ಕನ್ನಡ</option>
+              <option value="en">English</option>
+              <option value="as">Assamese · অসমীয়া</option>
+              <option value="bn">Bengali · বাংলা</option>
+              <option value="gu">Gujarati · ગુજરાતી</option>
+              <option value="hi">Hindi · हिन्दी</option>
+              <option value="ml">Malayalam · മലയാളം</option>
+              <option value="mr">Marathi · मराठी</option>
+              <option value="or">Odia · ଓଡ଼ିଆ</option>
+              <option value="pa">Punjabi · ਪੰਜਾਬੀ</option>
+              <option value="ta">Tamil · தமிழ்</option>
+              <option value="te">Telugu · తెలుగు</option>
+          </select>
+          <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg>
         </div>
-      </fieldset>
+      </div>
 
       <div class="field">
-        <span class="field-label">Voice</span>
+        <label class="field-label" for="voice-select">Voice</label>
+        <div class="select-box">
+          <select id="voice-select"></select>
+          <svg class="chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5"/></svg>
+        </div>
         <div class="voice-card">
           <span class="avatar avatar-lg" id="voice-avatar" aria-hidden="true">ಕ</span>
           <div>
@@ -167,10 +201,10 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></form>
     <h2 id="help-title">Tips for best results</h2>
     <ul class="tips">
-      <li><strong>Choose the language.</strong> Pick Kannada or English above the text box or under Settings. Each language has its own voice.</li>
-      <li><strong>Numbers are read for you.</strong> Dates, times, money, percent, phone numbers and units are spoken in formal Kannada: <span class="kn">₹1,250</span>, <span class="kn">10:30ಕ್ಕೆ</span>, <span class="kn">03-11-2026ರಂದು</span>, <span class="kn">72%</span>, <span class="kn">145 km</span>. In English they are read the Indian way: ₹1,25,000 becomes “one lakh twenty five thousand rupees”.</li>
+      <li><strong>Choose the language and voice.</strong> Use the two drop-downs above the text box (or under Settings): 12 languages, each with a female and a male voice. Write in the language's own script.</li>
+      <li><strong>Numbers are read for you.</strong> In Kannada they are spoken in formal Kannada: <span class="kn">₹1,250</span>, <span class="kn">10:30ಕ್ಕೆ</span>, <span class="kn">03-11-2026ರಂದು</span>, <span class="kn">72%</span>. In English they are read the Indian way: ₹1,25,000 becomes “one lakh twenty five thousand rupees”. In the other languages numbers are read in English words for now; write them as words for the most natural result.</li>
       <li><strong>Punctuation shapes the rhythm.</strong> Full stops and commas add natural pauses. Long text is read sentence by sentence.</li>
-      <li><strong>Mixing is fine.</strong> In Kannada, write English words in English letters, like <span class="kn">ನನ್ನ phone ಎಲ್ಲಿದೆ?</span> Indian names such as Bengaluru and Hubballi are read the Indian way in both languages.</li>
+      <li><strong>Mixing is fine.</strong> Write English words in English letters, like <span class="kn">ನನ್ನ phone ಎಲ್ಲಿದೆ?</span> or <span class="kn">मेरा phone कहाँ है?</span> Words missing from the English dictionary are read by Indian spelling rules.</li>
       <li><strong>Emoji and rare symbols are skipped.</strong> The “How it was read” box shows exactly what was spoken.</li>
       <li><strong>Up to 1,000 characters</strong> per generation. Audio starts playing while the rest is still being made.</li>
       <li><strong>Private by design.</strong> The model runs in your browser. Nothing you type is sent anywhere.</li>

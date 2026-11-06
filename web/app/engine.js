@@ -1,6 +1,8 @@
 // PiVo browser runtime: the same steps as src/pivo/runtime.py, on onnxruntime-web (WebAssembly).
 // It runs inside a Web Worker (worker.js), so the page never freezes while audio is generated.
 // Checked against the Python runtime: identical token ids, audio within 1e-4.
+// Multilingual models (PiVo-Multi) have a fourth encoder input `lang`; the attention head size
+// depends on the model width (96 -> 24, 128 -> 32) and comes from the model metadata.
 
 const CFG = { maxTokenFrames: 200, maxUtteranceFrames: 3000, kvHeads: 2, headDim: 24, chunk: 16, numSpecial: 10, space: 3 };
 const STATE = [["memory", 256], ["gru1", 160], ["gru2", 128], ["gru3", 128], ["frame_state", 164]];
@@ -16,23 +18,28 @@ channel.port1.onmessage = () => waiting.shift()?.();
 const tick = () => new Promise((resolve) => { waiting.push(resolve); channel.port2.postMessage(0); });
 
 export class PiVoEngine {
-  /** buffers: { encoder: ArrayBuffer, ... } */
-  static async create(ort, buffers) {
+  /** buffers: { encoder: ArrayBuffer, ... }; config: { head_dim, kv_heads } from the model metadata */
+  static async create(ort, buffers, config = {}) {
     const e = new PiVoEngine();
     e.ort = ort;
     e.s = {};
+    e.cfg = { ...CFG, headDim: config.head_dim ?? CFG.headDim, kvHeads: config.kv_heads ?? CFG.kvHeads };
     const opts = { executionProviders: ["wasm"], graphOptimizationLevel: "all" };
     for (const name of MODEL_FILES) e.s[name] = await ort.InferenceSession.create(new Uint8Array(buffers[name]), opts);
+    e.hasLang = e.s.encoder.inputNames.includes("lang");
     return e;
   }
 
   i64(arr, dims) { return new this.ort.Tensor("int64", BigInt64Array.from(arr, (v) => BigInt(v)), dims); }
   f32(data, dims) { return new this.ort.Tensor("float32", data, dims); }
 
-  /** Token ids -> durations + acoustic features [frames x 20]. */
-  async features(ids, voice, speed = 1.0) {
+  /** Token ids -> durations + acoustic features [frames x 20]. `lang`: language id (multilingual models). */
+  async features(ids, voice, speed = 1.0, lang = 0) {
+    const CFG = this.cfg;
     const T = ids.length;
-    const enc = await this.s.encoder.run({ tokens: this.i64(ids, [1, T]), voice: this.i64([voice], [1]), lengths: this.i64([T], [1]) });
+    const feeds = { tokens: this.i64(ids, [1, T]), voice: this.i64([voice], [1]), lengths: this.i64([T], [1]) };
+    if (this.hasLang) feeds.lang = this.i64([lang], [1]);
+    const enc = await this.s.encoder.run(feeds);
     const encoded = enc.encoded.data, logd = enc.log_durations.data, W = enc.encoded.dims[2];
     const lmax = Math.log1p(CFG.maxTokenFrames);
     const dur = ids.map((tok, i) => {
@@ -77,15 +84,15 @@ export class PiVoEngine {
    * Token ids -> PCM blocks (Float32Array, 16 kHz). Yields `firstBlock` frames first for a fast
    * start, then `block` frames at a time. `stop()` is polled between frames.
    */
-  async *stream(ids, voice, speed, { firstBlock = 8, block = 20, stop = () => false } = {}) {
-    const f = await this.features(ids, voice, speed);
+  async *stream(ids, voice, speed, { firstBlock = 8, block = 20, stop = () => false, lang = 0 } = {}) {
+    const f = await this.features(ids, voice, speed, lang);
     if (f.tooLong) {
       // over the 30 s utterance budget: split between words and do each half
       const spaces = ids.map((id, i) => (id === CFG.space ? i : -1)).filter((i) => i > 0);
       if (!spaces.length) throw new Error("This sentence is too long to read in one go. Add a full stop or comma.");
       const mid = spaces[Math.floor(spaces.length / 2)];
-      yield* this.stream([...ids.slice(0, mid), 2], voice, speed, { firstBlock, block, stop });
-      yield* this.stream([1, ...ids.slice(mid + 1)], voice, speed, { firstBlock, block, stop });
+      yield* this.stream([...ids.slice(0, mid), 2], voice, speed, { firstBlock, block, stop, lang });
+      yield* this.stream([1, ...ids.slice(mid + 1)], voice, speed, { firstBlock, block, stop, lang });
       return;
     }
     yield* this.vocode(f.feats, f.frames, { firstBlock, block, stop });

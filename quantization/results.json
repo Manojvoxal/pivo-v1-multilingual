@@ -1,0 +1,3278 @@
+{
+ "sizes_bytes": {
+  "fp32": {
+   "raw": 7573627,
+   "gzip": 6926196,
+   "acoustic": 4289640,
+   "vocoder": 3283987
+  },
+  "fp16": {
+   "raw": 3893731,
+   "gzip": 3481803,
+   "acoustic": 2239690,
+   "vocoder": 1654041
+  },
+  "int8": {
+   "raw": 2109435,
+   "gzip": 1759296,
+   "acoustic": 1247515,
+   "vocoder": 861920
+  },
+  "int8dyn": {
+   "raw": 3062177,
+   "gzip": 2561787,
+   "acoustic": 2111025,
+   "vocoder": 951152
+  },
+  "int4": {
+   "raw": 1492935,
+   "gzip": 1123818,
+   "acoustic": 932985,
+   "vocoder": 559950
+  },
+  "int4b16": {
+   "raw": 1748411,
+   "gzip": 1359570,
+   "acoustic": 1077427,
+   "vocoder": 670984
+  },
+  "int4mix": {
+   "raw": 1820200,
+   "gzip": 1416864,
+   "acoustic": 1141791,
+   "vocoder": 678409
+  },
+  "int4mix+int8voc": {
+   "raw": 2003711,
+   "gzip": 1574393,
+   "acoustic": 1141791,
+   "vocoder": 861920
+  }
+ },
+ "quality_vs_fp32": {
+  "fp32": {
+   "tag": "fp32",
+   "acoustic": "fp32",
+   "vocoder": "fp32",
+   "rtf": 0.09762414611827953,
+   "voices": [
+    {
+     "voice": "kn_f",
+     "seconds": 7.76,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.576
+    },
+    {
+     "voice": "kn_m",
+     "seconds": 5.94,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.695
+    },
+    {
+     "voice": "en_f",
+     "seconds": 5.63,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.638
+    },
+    {
+     "voice": "en_m",
+     "seconds": 7.33,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.663
+    },
+    {
+     "voice": "as_f",
+     "seconds": 6.76,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.524
+    },
+    {
+     "voice": "as_m",
+     "seconds": 7.01,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.833
+    },
+    {
+     "voice": "bn_f",
+     "seconds": 6.77,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.655
+    },
+    {
+     "voice": "bn_m",
+     "seconds": 6.18,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.572
+    },
+    {
+     "voice": "gu_f",
+     "seconds": 7.56,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.67
+    },
+    {
+     "voice": "gu_m",
+     "seconds": 6.65,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.655
+    },
+    {
+     "voice": "hi_f",
+     "seconds": 7.08,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.655
+    },
+    {
+     "voice": "hi_m",
+     "seconds": 6.49,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.643
+    },
+    {
+     "voice": "ml_f",
+     "seconds": 7.1,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.531
+    },
+    {
+     "voice": "ml_m",
+     "seconds": 6.31,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.783
+    },
+    {
+     "voice": "mr_f",
+     "seconds": 8.08,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.642
+    },
+    {
+     "voice": "mr_m",
+     "seconds": 7.71,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.48
+    },
+    {
+     "voice": "or_f",
+     "seconds": 7.24,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.679
+    },
+    {
+     "voice": "or_m",
+     "seconds": 6.51,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.63
+    },
+    {
+     "voice": "pa_f",
+     "seconds": 8.17,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.634
+    },
+    {
+     "voice": "pa_m",
+     "seconds": 7.46,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.811
+    },
+    {
+     "voice": "ta_f",
+     "seconds": 6.0,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.614
+    },
+    {
+     "voice": "ta_m",
+     "seconds": 5.19,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.518
+    },
+    {
+     "voice": "te_f",
+     "seconds": 5.74,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.82
+    },
+    {
+     "voice": "te_m",
+     "seconds": 5.5,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.0,
+     "wave_corr": 1.0,
+     "peak": 0.607
+    }
+   ]
+  },
+  "fp16": {
+   "tag": "fp16",
+   "acoustic": "fp16",
+   "vocoder": "fp16",
+   "rtf": 0.09642100292304134,
+   "voices": [
+    {
+     "voice": "kn_f",
+     "seconds": 7.76,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.076,
+     "wave_corr": 0.99858,
+     "peak": 0.576
+    },
+    {
+     "voice": "kn_m",
+     "seconds": 5.94,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0005,
+     "pitch_cents": 0.1,
+     "mel_db": 0.184,
+     "wave_corr": 0.98787,
+     "peak": 0.698
+    },
+    {
+     "voice": "en_f",
+     "seconds": 5.63,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.278,
+     "wave_corr": 0.9771,
+     "peak": 0.637
+    },
+    {
+     "voice": "en_m",
+     "seconds": 7.33,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0005,
+     "pitch_cents": 0.1,
+     "mel_db": 0.057,
+     "wave_corr": 0.99962,
+     "peak": 0.664
+    },
+    {
+     "voice": "as_f",
+     "seconds": 6.76,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0005,
+     "pitch_cents": 0.1,
+     "mel_db": 0.081,
+     "wave_corr": 0.99762,
+     "peak": 0.524
+    },
+    {
+     "voice": "as_m",
+     "seconds": 7.01,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.069,
+     "wave_corr": 0.9996,
+     "peak": 0.833
+    },
+    {
+     "voice": "bn_f",
+     "seconds": 6.77,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0006,
+     "pitch_cents": 0.1,
+     "mel_db": 0.221,
+     "wave_corr": 0.96345,
+     "peak": 0.655
+    },
+    {
+     "voice": "bn_m",
+     "seconds": 6.17,
+     "dur_match": 0.9867,
+     "cep_rmse": 0.0005,
+     "pitch_cents": 0.1,
+     "mel_db": 0.23,
+     "wave_corr": 0.98258,
+     "peak": 0.571
+    },
+    {
+     "voice": "gu_f",
+     "seconds": 7.56,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.132,
+     "wave_corr": 0.99134,
+     "peak": 0.669
+    },
+    {
+     "voice": "gu_m",
+     "seconds": 6.65,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.068,
+     "wave_corr": 0.99895,
+     "peak": 0.654
+    },
+    {
+     "voice": "hi_f",
+     "seconds": 7.08,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.165,
+     "wave_corr": 0.97868,
+     "peak": 0.656
+    },
+    {
+     "voice": "hi_m",
+     "seconds": 6.49,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.2,
+     "mel_db": 0.213,
+     "wave_corr": 0.97025,
+     "peak": 0.656
+    },
+    {
+     "voice": "ml_f",
+     "seconds": 7.1,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.11,
+     "wave_corr": 0.99609,
+     "peak": 0.531
+    },
+    {
+     "voice": "ml_m",
+     "seconds": 6.31,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.098,
+     "wave_corr": 0.99633,
+     "peak": 0.781
+    },
+    {
+     "voice": "mr_f",
+     "seconds": 8.08,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.209,
+     "wave_corr": 0.98699,
+     "peak": 0.648
+    },
+    {
+     "voice": "mr_m",
+     "seconds": 7.71,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.318,
+     "wave_corr": 0.8906,
+     "peak": 0.481
+    },
+    {
+     "voice": "or_f",
+     "seconds": 7.24,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.033,
+     "wave_corr": 0.99992,
+     "peak": 0.679
+    },
+    {
+     "voice": "or_m",
+     "seconds": 6.51,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0005,
+     "pitch_cents": 0.1,
+     "mel_db": 0.11,
+     "wave_corr": 0.99837,
+     "peak": 0.63
+    },
+    {
+     "voice": "pa_f",
+     "seconds": 8.17,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.157,
+     "wave_corr": 0.98905,
+     "peak": 0.635
+    },
+    {
+     "voice": "pa_m",
+     "seconds": 7.46,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.198,
+     "wave_corr": 0.97206,
+     "peak": 0.809
+    },
+    {
+     "voice": "ta_f",
+     "seconds": 6.0,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.67,
+     "wave_corr": 0.88171,
+     "peak": 0.608
+    },
+    {
+     "voice": "ta_m",
+     "seconds": 5.19,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.072,
+     "wave_corr": 0.99853,
+     "peak": 0.519
+    },
+    {
+     "voice": "te_f",
+     "seconds": 5.74,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0004,
+     "pitch_cents": 0.1,
+     "mel_db": 0.221,
+     "wave_corr": 0.97166,
+     "peak": 0.813
+    },
+    {
+     "voice": "te_m",
+     "seconds": 5.5,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0005,
+     "pitch_cents": 0.1,
+     "mel_db": 0.137,
+     "wave_corr": 0.9962,
+     "peak": 0.657
+    }
+   ]
+  },
+  "int8@noqdq": {
+   "tag": "int8@noqdq",
+   "acoustic": "int8",
+   "vocoder": "int8",
+   "rtf": 0.09323156117066801,
+   "voices": [
+    {
+     "voice": "kn_f",
+     "seconds": 7.76,
+     "dur_match": 0.9753,
+     "cep_rmse": 0.0113,
+     "pitch_cents": 3.7,
+     "mel_db": 1.299,
+     "wave_corr": 0.77007,
+     "peak": 0.559
+    },
+    {
+     "voice": "kn_m",
+     "seconds": 5.94,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0122,
+     "pitch_cents": 2.5,
+     "mel_db": 1.179,
+     "wave_corr": 0.79771,
+     "peak": 0.741
+    },
+    {
+     "voice": "en_f",
+     "seconds": 5.63,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0129,
+     "pitch_cents": 3.3,
+     "mel_db": 1.392,
+     "wave_corr": 0.69605,
+     "peak": 0.636
+    },
+    {
+     "voice": "en_m",
+     "seconds": 7.31,
+     "dur_match": 0.9508,
+     "cep_rmse": 0.0154,
+     "pitch_cents": 4.0,
+     "mel_db": 1.075,
+     "wave_corr": 0.78231,
+     "peak": 0.597
+    },
+    {
+     "voice": "as_f",
+     "seconds": 6.78,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0143,
+     "pitch_cents": 3.5,
+     "mel_db": 1.35,
+     "wave_corr": 0.61341,
+     "peak": 0.539
+    },
+    {
+     "voice": "as_m",
+     "seconds": 7.06,
+     "dur_match": 0.9639,
+     "cep_rmse": 0.0146,
+     "pitch_cents": 3.1,
+     "mel_db": 1.221,
+     "wave_corr": 0.70818,
+     "peak": 0.722
+    },
+    {
+     "voice": "bn_f",
+     "seconds": 6.75,
+     "dur_match": 0.96,
+     "cep_rmse": 0.0143,
+     "pitch_cents": 3.8,
+     "mel_db": 1.516,
+     "wave_corr": 0.51019,
+     "peak": 0.648
+    },
+    {
+     "voice": "bn_m",
+     "seconds": 6.21,
+     "dur_match": 0.9733,
+     "cep_rmse": 0.0115,
+     "pitch_cents": 3.1,
+     "mel_db": 1.26,
+     "wave_corr": 0.70714,
+     "peak": 0.588
+    },
+    {
+     "voice": "gu_f",
+     "seconds": 7.55,
+     "dur_match": 0.9875,
+     "cep_rmse": 0.0132,
+     "pitch_cents": 2.7,
+     "mel_db": 1.569,
+     "wave_corr": 0.38286,
+     "peak": 0.675
+    },
+    {
+     "voice": "gu_m",
+     "seconds": 6.65,
+     "dur_match": 0.9875,
+     "cep_rmse": 0.0143,
+     "pitch_cents": 4.8,
+     "mel_db": 1.366,
+     "wave_corr": 0.58236,
+     "peak": 0.659
+    },
+    {
+     "voice": "hi_f",
+     "seconds": 7.08,
+     "dur_match": 0.974,
+     "cep_rmse": 0.0121,
+     "pitch_cents": 2.4,
+     "mel_db": 1.477,
+     "wave_corr": 0.69114,
+     "peak": 0.652
+    },
+    {
+     "voice": "hi_m",
+     "seconds": 6.5,
+     "dur_match": 0.9481,
+     "cep_rmse": 0.0125,
+     "pitch_cents": 3.4,
+     "mel_db": 1.224,
+     "wave_corr": 0.7939,
+     "peak": 0.672
+    },
+    {
+     "voice": "ml_f",
+     "seconds": 7.11,
+     "dur_match": 0.9902,
+     "cep_rmse": 0.0126,
+     "pitch_cents": 2.8,
+     "mel_db": 1.328,
+     "wave_corr": 0.6941,
+     "peak": 0.546
+    },
+    {
+     "voice": "ml_m",
+     "seconds": 6.3,
+     "dur_match": 0.9608,
+     "cep_rmse": 0.0141,
+     "pitch_cents": 4.8,
+     "mel_db": 1.311,
+     "wave_corr": 0.76112,
+     "peak": 0.724
+    },
+    {
+     "voice": "mr_f",
+     "seconds": 8.08,
+     "dur_match": 0.9551,
+     "cep_rmse": 0.0133,
+     "pitch_cents": 3.0,
+     "mel_db": 1.422,
+     "wave_corr": 0.61651,
+     "peak": 0.7
+    },
+    {
+     "voice": "mr_m",
+     "seconds": 7.71,
+     "dur_match": 0.9775,
+     "cep_rmse": 0.0124,
+     "pitch_cents": 2.1,
+     "mel_db": 1.168,
+     "wave_corr": 0.75018,
+     "peak": 0.504
+    },
+    {
+     "voice": "or_f",
+     "seconds": 7.25,
+     "dur_match": 0.9643,
+     "cep_rmse": 0.015,
+     "pitch_cents": 3.2,
+     "mel_db": 1.596,
+     "wave_corr": 0.54586,
+     "peak": 0.518
+    },
+    {
+     "voice": "or_m",
+     "seconds": 6.49,
+     "dur_match": 0.9762,
+     "cep_rmse": 0.0121,
+     "pitch_cents": 3.8,
+     "mel_db": 1.28,
+     "wave_corr": 0.65497,
+     "peak": 0.656
+    },
+    {
+     "voice": "pa_f",
+     "seconds": 8.2,
+     "dur_match": 0.9535,
+     "cep_rmse": 0.0136,
+     "pitch_cents": 4.4,
+     "mel_db": 1.444,
+     "wave_corr": 0.49273,
+     "peak": 0.607
+    },
+    {
+     "voice": "pa_m",
+     "seconds": 7.47,
+     "dur_match": 0.9767,
+     "cep_rmse": 0.0113,
+     "pitch_cents": 1.9,
+     "mel_db": 1.137,
+     "wave_corr": 0.80661,
+     "peak": 0.784
+    },
+    {
+     "voice": "ta_f",
+     "seconds": 6.01,
+     "dur_match": 0.9882,
+     "cep_rmse": 0.0107,
+     "pitch_cents": 4.6,
+     "mel_db": 1.697,
+     "wave_corr": 0.3507,
+     "peak": 0.665
+    },
+    {
+     "voice": "ta_m",
+     "seconds": 5.19,
+     "dur_match": 0.9882,
+     "cep_rmse": 0.0157,
+     "pitch_cents": 8.7,
+     "mel_db": 1.422,
+     "wave_corr": 0.57048,
+     "peak": 0.518
+    },
+    {
+     "voice": "te_f",
+     "seconds": 5.76,
+     "dur_match": 0.973,
+     "cep_rmse": 0.0103,
+     "pitch_cents": 3.5,
+     "mel_db": 1.24,
+     "wave_corr": 0.75161,
+     "peak": 0.814
+    },
+    {
+     "voice": "te_m",
+     "seconds": 5.51,
+     "dur_match": 0.9865,
+     "cep_rmse": 0.0122,
+     "pitch_cents": 4.4,
+     "mel_db": 1.31,
+     "wave_corr": 0.74601,
+     "peak": 0.665
+    }
+   ]
+  },
+  "int4@noqdq": {
+   "tag": "int4@noqdq",
+   "acoustic": "int4",
+   "vocoder": "int4",
+   "rtf": 0.09219036901178339,
+   "voices": [
+    {
+     "voice": "kn_f",
+     "seconds": 7.47,
+     "dur_match": 0.6173,
+     "cep_rmse": 0.1584,
+     "pitch_cents": 55.0,
+     "mel_db": 5.244,
+     "wave_corr": 0.0209,
+     "peak": 0.537
+    },
+    {
+     "voice": "kn_m",
+     "seconds": 5.71,
+     "dur_match": 0.5926,
+     "cep_rmse": 0.1855,
+     "pitch_cents": 58.2,
+     "mel_db": 5.127,
+     "wave_corr": 0.0374,
+     "peak": 1.013
+    },
+    {
+     "voice": "en_f",
+     "seconds": 5.55,
+     "dur_match": 0.5902,
+     "cep_rmse": 0.1593,
+     "pitch_cents": 36.4,
+     "mel_db": 5.18,
+     "wave_corr": 0.00347,
+     "peak": 0.709
+    },
+    {
+     "voice": "en_m",
+     "seconds": 7.13,
+     "dur_match": 0.5902,
+     "cep_rmse": 0.1891,
+     "pitch_cents": 61.2,
+     "mel_db": 4.876,
+     "wave_corr": 0.07365,
+     "peak": 0.634
+    },
+    {
+     "voice": "as_f",
+     "seconds": 6.62,
+     "dur_match": 0.7229,
+     "cep_rmse": 0.1804,
+     "pitch_cents": 33.9,
+     "mel_db": 5.135,
+     "wave_corr": 0.08236,
+     "peak": 0.775
+    },
+    {
+     "voice": "as_m",
+     "seconds": 6.72,
+     "dur_match": 0.5783,
+     "cep_rmse": 0.1769,
+     "pitch_cents": 44.9,
+     "mel_db": 5.156,
+     "wave_corr": 0.05909,
+     "peak": 0.813
+    },
+    {
+     "voice": "bn_f",
+     "seconds": 6.47,
+     "dur_match": 0.7333,
+     "cep_rmse": 0.2248,
+     "pitch_cents": 96.4,
+     "mel_db": 5.915,
+     "wave_corr": 0.01846,
+     "peak": 0.771
+    },
+    {
+     "voice": "bn_m",
+     "seconds": 6.08,
+     "dur_match": 0.7067,
+     "cep_rmse": 0.2461,
+     "pitch_cents": 67.2,
+     "mel_db": 4.851,
+     "wave_corr": -0.04477,
+     "peak": 0.651
+    },
+    {
+     "voice": "gu_f",
+     "seconds": 7.42,
+     "dur_match": 0.6875,
+     "cep_rmse": 0.1563,
+     "pitch_cents": 47.4,
+     "mel_db": 5.405,
+     "wave_corr": 0.0265,
+     "peak": 0.734
+    },
+    {
+     "voice": "gu_m",
+     "seconds": 6.37,
+     "dur_match": 0.5875,
+     "cep_rmse": 0.1704,
+     "pitch_cents": 51.2,
+     "mel_db": 5.057,
+     "wave_corr": 0.02936,
+     "peak": 0.869
+    },
+    {
+     "voice": "hi_f",
+     "seconds": 6.89,
+     "dur_match": 0.6883,
+     "cep_rmse": 0.1765,
+     "pitch_cents": 44.7,
+     "mel_db": 5.955,
+     "wave_corr": 0.034,
+     "peak": 0.855
+    },
+    {
+     "voice": "hi_m",
+     "seconds": 6.4,
+     "dur_match": 0.7273,
+     "cep_rmse": 0.1701,
+     "pitch_cents": 47.5,
+     "mel_db": 5.598,
+     "wave_corr": 0.06255,
+     "peak": 0.83
+    },
+    {
+     "voice": "ml_f",
+     "seconds": 7.13,
+     "dur_match": 0.7647,
+     "cep_rmse": 0.1964,
+     "pitch_cents": 47.2,
+     "mel_db": 5.815,
+     "wave_corr": 0.08445,
+     "peak": 0.824
+    },
+    {
+     "voice": "ml_m",
+     "seconds": 5.71,
+     "dur_match": 0.6176,
+     "cep_rmse": 0.2243,
+     "pitch_cents": 51.0,
+     "mel_db": 5.015,
+     "wave_corr": 0.01945,
+     "peak": 0.766
+    },
+    {
+     "voice": "mr_f",
+     "seconds": 7.9,
+     "dur_match": 0.6067,
+     "cep_rmse": 0.1719,
+     "pitch_cents": 41.0,
+     "mel_db": 5.456,
+     "wave_corr": 0.0381,
+     "peak": 0.786
+    },
+    {
+     "voice": "mr_m",
+     "seconds": 7.64,
+     "dur_match": 0.6404,
+     "cep_rmse": 0.1934,
+     "pitch_cents": 43.9,
+     "mel_db": 4.563,
+     "wave_corr": 0.04301,
+     "peak": 0.744
+    },
+    {
+     "voice": "or_f",
+     "seconds": 7.26,
+     "dur_match": 0.6548,
+     "cep_rmse": 0.209,
+     "pitch_cents": 42.6,
+     "mel_db": 5.778,
+     "wave_corr": 0.04271,
+     "peak": 0.784
+    },
+    {
+     "voice": "or_m",
+     "seconds": 6.51,
+     "dur_match": 0.7024,
+     "cep_rmse": 0.1783,
+     "pitch_cents": 38.2,
+     "mel_db": 4.721,
+     "wave_corr": 0.07204,
+     "peak": 0.701
+    },
+    {
+     "voice": "pa_f",
+     "seconds": 7.88,
+     "dur_match": 0.593,
+     "cep_rmse": 0.1636,
+     "pitch_cents": 47.2,
+     "mel_db": 5.31,
+     "wave_corr": 0.06324,
+     "peak": 0.891
+    },
+    {
+     "voice": "pa_m",
+     "seconds": 7.26,
+     "dur_match": 0.7093,
+     "cep_rmse": 0.1664,
+     "pitch_cents": 39.0,
+     "mel_db": 4.702,
+     "wave_corr": -0.00734,
+     "peak": 0.653
+    },
+    {
+     "voice": "ta_f",
+     "seconds": 6.15,
+     "dur_match": 0.7176,
+     "cep_rmse": 0.1748,
+     "pitch_cents": 46.3,
+     "mel_db": 5.765,
+     "wave_corr": -0.03974,
+     "peak": 0.994
+    },
+    {
+     "voice": "ta_m",
+     "seconds": 5.36,
+     "dur_match": 0.7882,
+     "cep_rmse": 0.1682,
+     "pitch_cents": 39.2,
+     "mel_db": 4.67,
+     "wave_corr": 0.16398,
+     "peak": 0.623
+    },
+    {
+     "voice": "te_f",
+     "seconds": 5.73,
+     "dur_match": 0.7703,
+     "cep_rmse": 0.1761,
+     "pitch_cents": 43.5,
+     "mel_db": 4.91,
+     "wave_corr": -0.04395,
+     "peak": 0.953
+    },
+    {
+     "voice": "te_m",
+     "seconds": 5.41,
+     "dur_match": 0.7027,
+     "cep_rmse": 0.1855,
+     "pitch_cents": 78.7,
+     "mel_db": 5.017,
+     "wave_corr": 0.00627,
+     "peak": 0.932
+    }
+   ]
+  },
+  "int4mix@noqdq": {
+   "tag": "int4mix@noqdq",
+   "acoustic": "int4mix",
+   "vocoder": "int4mix",
+   "rtf": 0.09411526570948223,
+   "voices": [
+    {
+     "voice": "kn_f",
+     "seconds": 7.68,
+     "dur_match": 0.7284,
+     "cep_rmse": 0.1203,
+     "pitch_cents": 35.2,
+     "mel_db": 4.258,
+     "wave_corr": 0.10367,
+     "peak": 0.416
+    },
+    {
+     "voice": "kn_m",
+     "seconds": 5.9,
+     "dur_match": 0.8395,
+     "cep_rmse": 0.1286,
+     "pitch_cents": 22.3,
+     "mel_db": 4.047,
+     "wave_corr": 0.04337,
+     "peak": 0.67
+    },
+    {
+     "voice": "en_f",
+     "seconds": 5.49,
+     "dur_match": 0.7377,
+     "cep_rmse": 0.1449,
+     "pitch_cents": 31.4,
+     "mel_db": 4.393,
+     "wave_corr": 0.04656,
+     "peak": 0.768
+    },
+    {
+     "voice": "en_m",
+     "seconds": 7.36,
+     "dur_match": 0.6393,
+     "cep_rmse": 0.163,
+     "pitch_cents": 50.0,
+     "mel_db": 4.051,
+     "wave_corr": 0.10622,
+     "peak": 0.656
+    },
+    {
+     "voice": "as_f",
+     "seconds": 6.7,
+     "dur_match": 0.8554,
+     "cep_rmse": 0.135,
+     "pitch_cents": 20.5,
+     "mel_db": 4.016,
+     "wave_corr": 0.0905,
+     "peak": 0.515
+    },
+    {
+     "voice": "as_m",
+     "seconds": 6.94,
+     "dur_match": 0.8916,
+     "cep_rmse": 0.1303,
+     "pitch_cents": 45.5,
+     "mel_db": 4.107,
+     "wave_corr": 0.11027,
+     "peak": 0.642
+    },
+    {
+     "voice": "bn_f",
+     "seconds": 6.63,
+     "dur_match": 0.8267,
+     "cep_rmse": 0.1477,
+     "pitch_cents": 33.6,
+     "mel_db": 4.206,
+     "wave_corr": -0.00878,
+     "peak": 0.631
+    },
+    {
+     "voice": "bn_m",
+     "seconds": 6.15,
+     "dur_match": 0.8533,
+     "cep_rmse": 0.1625,
+     "pitch_cents": 31.5,
+     "mel_db": 4.016,
+     "wave_corr": 0.15573,
+     "peak": 0.705
+    },
+    {
+     "voice": "gu_f",
+     "seconds": 7.52,
+     "dur_match": 0.775,
+     "cep_rmse": 0.139,
+     "pitch_cents": 41.1,
+     "mel_db": 4.629,
+     "wave_corr": 0.00762,
+     "peak": 0.557
+    },
+    {
+     "voice": "gu_m",
+     "seconds": 6.54,
+     "dur_match": 0.7875,
+     "cep_rmse": 0.1466,
+     "pitch_cents": 30.5,
+     "mel_db": 3.973,
+     "wave_corr": 0.03121,
+     "peak": 0.61
+    },
+    {
+     "voice": "hi_f",
+     "seconds": 6.98,
+     "dur_match": 0.8052,
+     "cep_rmse": 0.1316,
+     "pitch_cents": 29.9,
+     "mel_db": 4.801,
+     "wave_corr": 0.04867,
+     "peak": 0.612
+    },
+    {
+     "voice": "hi_m",
+     "seconds": 6.54,
+     "dur_match": 0.7792,
+     "cep_rmse": 0.1345,
+     "pitch_cents": 31.0,
+     "mel_db": 4.56,
+     "wave_corr": -0.00093,
+     "peak": 0.628
+    },
+    {
+     "voice": "ml_f",
+     "seconds": 7.18,
+     "dur_match": 0.8039,
+     "cep_rmse": 0.1361,
+     "pitch_cents": 26.8,
+     "mel_db": 4.782,
+     "wave_corr": 0.18294,
+     "peak": 0.471
+    },
+    {
+     "voice": "ml_m",
+     "seconds": 6.13,
+     "dur_match": 0.7941,
+     "cep_rmse": 0.1359,
+     "pitch_cents": 34.2,
+     "mel_db": 4.134,
+     "wave_corr": 0.18426,
+     "peak": 0.724
+    },
+    {
+     "voice": "mr_f",
+     "seconds": 8.04,
+     "dur_match": 0.7528,
+     "cep_rmse": 0.1504,
+     "pitch_cents": 33.0,
+     "mel_db": 4.518,
+     "wave_corr": 0.12162,
+     "peak": 0.573
+    },
+    {
+     "voice": "mr_m",
+     "seconds": 7.59,
+     "dur_match": 0.7753,
+     "cep_rmse": 0.1709,
+     "pitch_cents": 37.1,
+     "mel_db": 3.869,
+     "wave_corr": 0.07789,
+     "peak": 0.435
+    },
+    {
+     "voice": "or_f",
+     "seconds": 7.23,
+     "dur_match": 0.7619,
+     "cep_rmse": 0.1411,
+     "pitch_cents": 30.2,
+     "mel_db": 4.799,
+     "wave_corr": 0.11945,
+     "peak": 0.534
+    },
+    {
+     "voice": "or_m",
+     "seconds": 6.41,
+     "dur_match": 0.6429,
+     "cep_rmse": 0.1407,
+     "pitch_cents": 28.9,
+     "mel_db": 3.978,
+     "wave_corr": 0.12866,
+     "peak": 0.571
+    },
+    {
+     "voice": "pa_f",
+     "seconds": 8.11,
+     "dur_match": 0.7558,
+     "cep_rmse": 0.1417,
+     "pitch_cents": 27.3,
+     "mel_db": 4.409,
+     "wave_corr": 0.01004,
+     "peak": 0.551
+    },
+    {
+     "voice": "pa_m",
+     "seconds": 7.45,
+     "dur_match": 0.7791,
+     "cep_rmse": 0.1428,
+     "pitch_cents": 43.9,
+     "mel_db": 3.891,
+     "wave_corr": 0.03293,
+     "peak": 0.652
+    },
+    {
+     "voice": "ta_f",
+     "seconds": 5.98,
+     "dur_match": 0.9176,
+     "cep_rmse": 0.1162,
+     "pitch_cents": 29.8,
+     "mel_db": 4.607,
+     "wave_corr": -0.03287,
+     "peak": 0.636
+    },
+    {
+     "voice": "ta_m",
+     "seconds": 5.28,
+     "dur_match": 0.8235,
+     "cep_rmse": 0.1232,
+     "pitch_cents": 44.4,
+     "mel_db": 4.018,
+     "wave_corr": 0.09099,
+     "peak": 0.524
+    },
+    {
+     "voice": "te_f",
+     "seconds": 5.7,
+     "dur_match": 0.8919,
+     "cep_rmse": 0.1432,
+     "pitch_cents": 29.3,
+     "mel_db": 3.944,
+     "wave_corr": 0.10332,
+     "peak": 0.558
+    },
+    {
+     "voice": "te_m",
+     "seconds": 5.36,
+     "dur_match": 0.7973,
+     "cep_rmse": 0.1472,
+     "pitch_cents": 29.0,
+     "mel_db": 3.919,
+     "wave_corr": 0.14332,
+     "peak": 0.524
+    }
+   ]
+  },
+  "int4b16@noqdq": {
+   "tag": "int4b16@noqdq",
+   "acoustic": "int4b16",
+   "vocoder": "int4b16",
+   "rtf": 0.0943722804473678,
+   "voices": [
+    {
+     "voice": "kn_f",
+     "seconds": 7.66,
+     "dur_match": 0.7654,
+     "cep_rmse": 0.1433,
+     "pitch_cents": 45.4,
+     "mel_db": 4.456,
+     "wave_corr": -0.05004,
+     "peak": 0.418
+    },
+    {
+     "voice": "kn_m",
+     "seconds": 5.72,
+     "dur_match": 0.6296,
+     "cep_rmse": 0.1554,
+     "pitch_cents": 30.7,
+     "mel_db": 4.1,
+     "wave_corr": 0.0791,
+     "peak": 0.718
+    },
+    {
+     "voice": "en_f",
+     "seconds": 5.68,
+     "dur_match": 0.6393,
+     "cep_rmse": 0.1768,
+     "pitch_cents": 40.6,
+     "mel_db": 4.619,
+     "wave_corr": -0.0576,
+     "peak": 0.787
+    },
+    {
+     "voice": "en_m",
+     "seconds": 7.46,
+     "dur_match": 0.4754,
+     "cep_rmse": 0.197,
+     "pitch_cents": 63.3,
+     "mel_db": 4.199,
+     "wave_corr": 0.09694,
+     "peak": 0.564
+    },
+    {
+     "voice": "as_f",
+     "seconds": 6.71,
+     "dur_match": 0.7711,
+     "cep_rmse": 0.1804,
+     "pitch_cents": 30.9,
+     "mel_db": 4.308,
+     "wave_corr": 0.10856,
+     "peak": 0.578
+    },
+    {
+     "voice": "as_m",
+     "seconds": 6.92,
+     "dur_match": 0.7831,
+     "cep_rmse": 0.1652,
+     "pitch_cents": 39.6,
+     "mel_db": 4.103,
+     "wave_corr": 0.11551,
+     "peak": 0.72
+    },
+    {
+     "voice": "bn_f",
+     "seconds": 6.71,
+     "dur_match": 0.68,
+     "cep_rmse": 0.1813,
+     "pitch_cents": 34.2,
+     "mel_db": 4.264,
+     "wave_corr": 0.01003,
+     "peak": 0.593
+    },
+    {
+     "voice": "bn_m",
+     "seconds": 6.12,
+     "dur_match": 0.8,
+     "cep_rmse": 0.1995,
+     "pitch_cents": 42.0,
+     "mel_db": 4.127,
+     "wave_corr": 0.02943,
+     "peak": 0.595
+    },
+    {
+     "voice": "gu_f",
+     "seconds": 7.6,
+     "dur_match": 0.725,
+     "cep_rmse": 0.1592,
+     "pitch_cents": 36.0,
+     "mel_db": 4.559,
+     "wave_corr": 0.06567,
+     "peak": 0.475
+    },
+    {
+     "voice": "gu_m",
+     "seconds": 6.51,
+     "dur_match": 0.625,
+     "cep_rmse": 0.1676,
+     "pitch_cents": 45.4,
+     "mel_db": 4.151,
+     "wave_corr": 0.03513,
+     "peak": 0.546
+    },
+    {
+     "voice": "hi_f",
+     "seconds": 6.92,
+     "dur_match": 0.7403,
+     "cep_rmse": 0.147,
+     "pitch_cents": 37.8,
+     "mel_db": 4.82,
+     "wave_corr": 0.03958,
+     "peak": 0.614
+    },
+    {
+     "voice": "hi_m",
+     "seconds": 6.48,
+     "dur_match": 0.7792,
+     "cep_rmse": 0.1613,
+     "pitch_cents": 33.8,
+     "mel_db": 4.516,
+     "wave_corr": 0.13609,
+     "peak": 0.736
+    },
+    {
+     "voice": "ml_f",
+     "seconds": 7.24,
+     "dur_match": 0.7941,
+     "cep_rmse": 0.167,
+     "pitch_cents": 28.5,
+     "mel_db": 4.695,
+     "wave_corr": 0.07178,
+     "peak": 0.536
+    },
+    {
+     "voice": "ml_m",
+     "seconds": 5.9,
+     "dur_match": 0.6863,
+     "cep_rmse": 0.1563,
+     "pitch_cents": 39.5,
+     "mel_db": 4.062,
+     "wave_corr": 0.17424,
+     "peak": 0.553
+    },
+    {
+     "voice": "mr_f",
+     "seconds": 8.23,
+     "dur_match": 0.6742,
+     "cep_rmse": 0.176,
+     "pitch_cents": 38.5,
+     "mel_db": 4.573,
+     "wave_corr": 0.0967,
+     "peak": 0.492
+    },
+    {
+     "voice": "mr_m",
+     "seconds": 7.7,
+     "dur_match": 0.7079,
+     "cep_rmse": 0.1873,
+     "pitch_cents": 38.1,
+     "mel_db": 3.895,
+     "wave_corr": 0.04527,
+     "peak": 0.525
+    },
+    {
+     "voice": "or_f",
+     "seconds": 7.15,
+     "dur_match": 0.6548,
+     "cep_rmse": 0.1886,
+     "pitch_cents": 38.6,
+     "mel_db": 4.83,
+     "wave_corr": 0.09736,
+     "peak": 0.452
+    },
+    {
+     "voice": "or_m",
+     "seconds": 6.34,
+     "dur_match": 0.6905,
+     "cep_rmse": 0.1765,
+     "pitch_cents": 37.1,
+     "mel_db": 4.042,
+     "wave_corr": 0.02347,
+     "peak": 0.604
+    },
+    {
+     "voice": "pa_f",
+     "seconds": 8.12,
+     "dur_match": 0.6279,
+     "cep_rmse": 0.168,
+     "pitch_cents": 37.9,
+     "mel_db": 4.473,
+     "wave_corr": 0.06232,
+     "peak": 0.517
+    },
+    {
+     "voice": "pa_m",
+     "seconds": 7.45,
+     "dur_match": 0.6628,
+     "cep_rmse": 0.1594,
+     "pitch_cents": 37.1,
+     "mel_db": 3.912,
+     "wave_corr": 0.09715,
+     "peak": 0.755
+    },
+    {
+     "voice": "ta_f",
+     "seconds": 6.07,
+     "dur_match": 0.8353,
+     "cep_rmse": 0.1274,
+     "pitch_cents": 29.8,
+     "mel_db": 4.566,
+     "wave_corr": 0.01733,
+     "peak": 0.655
+    },
+    {
+     "voice": "ta_m",
+     "seconds": 5.32,
+     "dur_match": 0.7882,
+     "cep_rmse": 0.1353,
+     "pitch_cents": 38.5,
+     "mel_db": 3.875,
+     "wave_corr": 0.05144,
+     "peak": 0.512
+    },
+    {
+     "voice": "te_f",
+     "seconds": 5.61,
+     "dur_match": 0.7838,
+     "cep_rmse": 0.1657,
+     "pitch_cents": 44.8,
+     "mel_db": 4.135,
+     "wave_corr": 0.07936,
+     "peak": 0.518
+    },
+    {
+     "voice": "te_m",
+     "seconds": 5.33,
+     "dur_match": 0.7162,
+     "cep_rmse": 0.1517,
+     "pitch_cents": 46.6,
+     "mel_db": 4.081,
+     "wave_corr": 0.07618,
+     "peak": 0.558
+    }
+   ]
+  },
+  "ac-int8_vo-fp32@noqdq": {
+   "tag": "ac-int8_vo-fp32@noqdq",
+   "acoustic": "int8",
+   "vocoder": "fp32",
+   "rtf": 0.09328651820086321,
+   "voices": [
+    {
+     "voice": "kn_f",
+     "seconds": 7.76,
+     "dur_match": 0.9753,
+     "cep_rmse": 0.0113,
+     "pitch_cents": 3.7,
+     "mel_db": 1.125,
+     "wave_corr": 0.76361,
+     "peak": 0.575
+    },
+    {
+     "voice": "kn_m",
+     "seconds": 5.94,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0122,
+     "pitch_cents": 2.5,
+     "mel_db": 0.954,
+     "wave_corr": 0.81866,
+     "peak": 0.765
+    },
+    {
+     "voice": "en_f",
+     "seconds": 5.63,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0129,
+     "pitch_cents": 3.3,
+     "mel_db": 1.198,
+     "wave_corr": 0.68164,
+     "peak": 0.646
+    },
+    {
+     "voice": "en_m",
+     "seconds": 7.31,
+     "dur_match": 0.9508,
+     "cep_rmse": 0.0154,
+     "pitch_cents": 4.0,
+     "mel_db": 0.799,
+     "wave_corr": 0.83784,
+     "peak": 0.589
+    },
+    {
+     "voice": "as_f",
+     "seconds": 6.78,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0143,
+     "pitch_cents": 3.5,
+     "mel_db": 1.15,
+     "wave_corr": 0.66364,
+     "peak": 0.516
+    },
+    {
+     "voice": "as_m",
+     "seconds": 7.06,
+     "dur_match": 0.9639,
+     "cep_rmse": 0.0146,
+     "pitch_cents": 3.1,
+     "mel_db": 1.037,
+     "wave_corr": 0.77146,
+     "peak": 0.761
+    },
+    {
+     "voice": "bn_f",
+     "seconds": 6.75,
+     "dur_match": 0.96,
+     "cep_rmse": 0.0143,
+     "pitch_cents": 3.8,
+     "mel_db": 1.207,
+     "wave_corr": 0.57855,
+     "peak": 0.626
+    },
+    {
+     "voice": "bn_m",
+     "seconds": 6.21,
+     "dur_match": 0.9733,
+     "cep_rmse": 0.0115,
+     "pitch_cents": 3.1,
+     "mel_db": 0.891,
+     "wave_corr": 0.81013,
+     "peak": 0.579
+    },
+    {
+     "voice": "gu_f",
+     "seconds": 7.55,
+     "dur_match": 0.9875,
+     "cep_rmse": 0.0132,
+     "pitch_cents": 2.7,
+     "mel_db": 1.34,
+     "wave_corr": 0.35694,
+     "peak": 0.651
+    },
+    {
+     "voice": "gu_m",
+     "seconds": 6.65,
+     "dur_match": 0.9875,
+     "cep_rmse": 0.0143,
+     "pitch_cents": 4.8,
+     "mel_db": 1.163,
+     "wave_corr": 0.59739,
+     "peak": 0.641
+    },
+    {
+     "voice": "hi_f",
+     "seconds": 7.08,
+     "dur_match": 0.974,
+     "cep_rmse": 0.0121,
+     "pitch_cents": 2.4,
+     "mel_db": 1.333,
+     "wave_corr": 0.62843,
+     "peak": 0.646
+    },
+    {
+     "voice": "hi_m",
+     "seconds": 6.5,
+     "dur_match": 0.9481,
+     "cep_rmse": 0.0125,
+     "pitch_cents": 3.4,
+     "mel_db": 0.936,
+     "wave_corr": 0.80372,
+     "peak": 0.676
+    },
+    {
+     "voice": "ml_f",
+     "seconds": 7.11,
+     "dur_match": 0.9902,
+     "cep_rmse": 0.0126,
+     "pitch_cents": 2.8,
+     "mel_db": 1.109,
+     "wave_corr": 0.7121,
+     "peak": 0.566
+    },
+    {
+     "voice": "ml_m",
+     "seconds": 6.3,
+     "dur_match": 0.9608,
+     "cep_rmse": 0.0141,
+     "pitch_cents": 4.8,
+     "mel_db": 1.127,
+     "wave_corr": 0.80608,
+     "peak": 0.757
+    },
+    {
+     "voice": "mr_f",
+     "seconds": 8.08,
+     "dur_match": 0.9551,
+     "cep_rmse": 0.0133,
+     "pitch_cents": 3.0,
+     "mel_db": 1.165,
+     "wave_corr": 0.58365,
+     "peak": 0.709
+    },
+    {
+     "voice": "mr_m",
+     "seconds": 7.71,
+     "dur_match": 0.9775,
+     "cep_rmse": 0.0124,
+     "pitch_cents": 2.1,
+     "mel_db": 0.909,
+     "wave_corr": 0.84656,
+     "peak": 0.507
+    },
+    {
+     "voice": "or_f",
+     "seconds": 7.25,
+     "dur_match": 0.9643,
+     "cep_rmse": 0.015,
+     "pitch_cents": 3.2,
+     "mel_db": 1.435,
+     "wave_corr": 0.56851,
+     "peak": 0.538
+    },
+    {
+     "voice": "or_m",
+     "seconds": 6.49,
+     "dur_match": 0.9762,
+     "cep_rmse": 0.0121,
+     "pitch_cents": 3.8,
+     "mel_db": 1.087,
+     "wave_corr": 0.67522,
+     "peak": 0.681
+    },
+    {
+     "voice": "pa_f",
+     "seconds": 8.2,
+     "dur_match": 0.9535,
+     "cep_rmse": 0.0136,
+     "pitch_cents": 4.4,
+     "mel_db": 1.092,
+     "wave_corr": 0.53889,
+     "peak": 0.626
+    },
+    {
+     "voice": "pa_m",
+     "seconds": 7.47,
+     "dur_match": 0.9767,
+     "cep_rmse": 0.0113,
+     "pitch_cents": 1.9,
+     "mel_db": 0.872,
+     "wave_corr": 0.84375,
+     "peak": 0.818
+    },
+    {
+     "voice": "ta_f",
+     "seconds": 6.01,
+     "dur_match": 0.9882,
+     "cep_rmse": 0.0107,
+     "pitch_cents": 4.6,
+     "mel_db": 1.64,
+     "wave_corr": 0.35906,
+     "peak": 0.654
+    },
+    {
+     "voice": "ta_m",
+     "seconds": 5.19,
+     "dur_match": 0.9882,
+     "cep_rmse": 0.0157,
+     "pitch_cents": 8.7,
+     "mel_db": 1.205,
+     "wave_corr": 0.68776,
+     "peak": 0.525
+    },
+    {
+     "voice": "te_f",
+     "seconds": 5.76,
+     "dur_match": 0.973,
+     "cep_rmse": 0.0103,
+     "pitch_cents": 3.5,
+     "mel_db": 1.121,
+     "wave_corr": 0.67494,
+     "peak": 0.872
+    },
+    {
+     "voice": "te_m",
+     "seconds": 5.51,
+     "dur_match": 0.9865,
+     "cep_rmse": 0.0122,
+     "pitch_cents": 4.4,
+     "mel_db": 1.128,
+     "wave_corr": 0.72884,
+     "peak": 0.667
+    }
+   ]
+  },
+  "ac-fp32_vo-int8@noqdq": {
+   "tag": "ac-fp32_vo-int8@noqdq",
+   "acoustic": "fp32",
+   "vocoder": "int8",
+   "rtf": 0.09402256504901886,
+   "voices": [
+    {
+     "voice": "kn_f",
+     "seconds": 7.76,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 1.019,
+     "wave_corr": 0.91867,
+     "peak": 0.569
+    },
+    {
+     "voice": "kn_m",
+     "seconds": 5.94,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.812,
+     "wave_corr": 0.91488,
+     "peak": 0.76
+    },
+    {
+     "voice": "en_f",
+     "seconds": 5.63,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 1.006,
+     "wave_corr": 0.93411,
+     "peak": 0.631
+    },
+    {
+     "voice": "en_m",
+     "seconds": 7.33,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.793,
+     "wave_corr": 0.8983,
+     "peak": 0.609
+    },
+    {
+     "voice": "as_f",
+     "seconds": 6.76,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.882,
+     "wave_corr": 0.93233,
+     "peak": 0.526
+    },
+    {
+     "voice": "as_m",
+     "seconds": 7.01,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.914,
+     "wave_corr": 0.86068,
+     "peak": 0.848
+    },
+    {
+     "voice": "bn_f",
+     "seconds": 6.77,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 1.442,
+     "wave_corr": 0.62779,
+     "peak": 0.731
+    },
+    {
+     "voice": "bn_m",
+     "seconds": 6.18,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 1.17,
+     "wave_corr": 0.66074,
+     "peak": 0.517
+    },
+    {
+     "voice": "gu_f",
+     "seconds": 7.56,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 1.104,
+     "wave_corr": 0.81094,
+     "peak": 0.66
+    },
+    {
+     "voice": "gu_m",
+     "seconds": 6.65,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 1.028,
+     "wave_corr": 0.80915,
+     "peak": 0.682
+    },
+    {
+     "voice": "hi_f",
+     "seconds": 7.08,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 1.098,
+     "wave_corr": 0.74554,
+     "peak": 0.662
+    },
+    {
+     "voice": "hi_m",
+     "seconds": 6.49,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.841,
+     "wave_corr": 0.89895,
+     "peak": 0.631
+    },
+    {
+     "voice": "ml_f",
+     "seconds": 7.1,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.923,
+     "wave_corr": 0.9468,
+     "peak": 0.539
+    },
+    {
+     "voice": "ml_m",
+     "seconds": 6.31,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.812,
+     "wave_corr": 0.92754,
+     "peak": 0.763
+    },
+    {
+     "voice": "mr_f",
+     "seconds": 8.08,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 1.209,
+     "wave_corr": 0.74873,
+     "peak": 0.658
+    },
+    {
+     "voice": "mr_m",
+     "seconds": 7.71,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.966,
+     "wave_corr": 0.82351,
+     "peak": 0.482
+    },
+    {
+     "voice": "or_f",
+     "seconds": 7.24,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 1.126,
+     "wave_corr": 0.85879,
+     "peak": 0.558
+    },
+    {
+     "voice": "or_m",
+     "seconds": 6.51,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.802,
+     "wave_corr": 0.96375,
+     "peak": 0.608
+    },
+    {
+     "voice": "pa_f",
+     "seconds": 8.17,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 1.142,
+     "wave_corr": 0.84637,
+     "peak": 0.656
+    },
+    {
+     "voice": "pa_m",
+     "seconds": 7.46,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 1.094,
+     "wave_corr": 0.81254,
+     "peak": 0.669
+    },
+    {
+     "voice": "ta_f",
+     "seconds": 6.0,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 1.128,
+     "wave_corr": 0.87564,
+     "peak": 0.582
+    },
+    {
+     "voice": "ta_m",
+     "seconds": 5.19,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.889,
+     "wave_corr": 0.84389,
+     "peak": 0.524
+    },
+    {
+     "voice": "te_f",
+     "seconds": 5.74,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 1.407,
+     "wave_corr": 0.74891,
+     "peak": 0.79
+    },
+    {
+     "voice": "te_m",
+     "seconds": 5.5,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 0.877,
+     "wave_corr": 0.90267,
+     "peak": 0.638
+    }
+   ]
+  },
+  "ac-int4_vo-fp32@noqdq": {
+   "tag": "ac-int4_vo-fp32@noqdq",
+   "acoustic": "int4",
+   "vocoder": "fp32",
+   "rtf": 0.09215767010770298,
+   "voices": [
+    {
+     "voice": "kn_f",
+     "seconds": 7.47,
+     "dur_match": 0.6173,
+     "cep_rmse": 0.1584,
+     "pitch_cents": 55.0,
+     "mel_db": 3.138,
+     "wave_corr": 0.04309,
+     "peak": 0.495
+    },
+    {
+     "voice": "kn_m",
+     "seconds": 5.71,
+     "dur_match": 0.5926,
+     "cep_rmse": 0.1855,
+     "pitch_cents": 58.2,
+     "mel_db": 2.87,
+     "wave_corr": 0.08679,
+     "peak": 0.825
+    },
+    {
+     "voice": "en_f",
+     "seconds": 5.55,
+     "dur_match": 0.5902,
+     "cep_rmse": 0.1593,
+     "pitch_cents": 36.4,
+     "mel_db": 2.993,
+     "wave_corr": -0.00981,
+     "peak": 0.697
+    },
+    {
+     "voice": "en_m",
+     "seconds": 7.13,
+     "dur_match": 0.5902,
+     "cep_rmse": 0.1891,
+     "pitch_cents": 61.2,
+     "mel_db": 2.807,
+     "wave_corr": -0.03032,
+     "peak": 0.617
+    },
+    {
+     "voice": "as_f",
+     "seconds": 6.62,
+     "dur_match": 0.7229,
+     "cep_rmse": 0.1804,
+     "pitch_cents": 33.9,
+     "mel_db": 3.006,
+     "wave_corr": 0.19604,
+     "peak": 0.546
+    },
+    {
+     "voice": "as_m",
+     "seconds": 6.72,
+     "dur_match": 0.5783,
+     "cep_rmse": 0.1769,
+     "pitch_cents": 44.9,
+     "mel_db": 2.718,
+     "wave_corr": 0.00219,
+     "peak": 0.829
+    },
+    {
+     "voice": "bn_f",
+     "seconds": 6.47,
+     "dur_match": 0.7333,
+     "cep_rmse": 0.2248,
+     "pitch_cents": 96.4,
+     "mel_db": 4.055,
+     "wave_corr": -0.00576,
+     "peak": 0.638
+    },
+    {
+     "voice": "bn_m",
+     "seconds": 6.08,
+     "dur_match": 0.7067,
+     "cep_rmse": 0.2461,
+     "pitch_cents": 67.2,
+     "mel_db": 3.122,
+     "wave_corr": 0.02977,
+     "peak": 0.62
+    },
+    {
+     "voice": "gu_f",
+     "seconds": 7.42,
+     "dur_match": 0.6875,
+     "cep_rmse": 0.1563,
+     "pitch_cents": 47.4,
+     "mel_db": 3.4,
+     "wave_corr": 0.14778,
+     "peak": 0.656
+    },
+    {
+     "voice": "gu_m",
+     "seconds": 6.37,
+     "dur_match": 0.5875,
+     "cep_rmse": 0.1704,
+     "pitch_cents": 51.2,
+     "mel_db": 3.058,
+     "wave_corr": 0.02661,
+     "peak": 0.767
+    },
+    {
+     "voice": "hi_f",
+     "seconds": 6.89,
+     "dur_match": 0.6883,
+     "cep_rmse": 0.1765,
+     "pitch_cents": 44.7,
+     "mel_db": 3.246,
+     "wave_corr": 0.00973,
+     "peak": 0.731
+    },
+    {
+     "voice": "hi_m",
+     "seconds": 6.4,
+     "dur_match": 0.7273,
+     "cep_rmse": 0.1701,
+     "pitch_cents": 47.5,
+     "mel_db": 2.875,
+     "wave_corr": 0.06225,
+     "peak": 0.686
+    },
+    {
+     "voice": "ml_f",
+     "seconds": 7.13,
+     "dur_match": 0.7647,
+     "cep_rmse": 0.1964,
+     "pitch_cents": 47.2,
+     "mel_db": 3.44,
+     "wave_corr": 0.07484,
+     "peak": 0.601
+    },
+    {
+     "voice": "ml_m",
+     "seconds": 5.71,
+     "dur_match": 0.6176,
+     "cep_rmse": 0.2243,
+     "pitch_cents": 51.0,
+     "mel_db": 2.791,
+     "wave_corr": 0.10749,
+     "peak": 0.762
+    },
+    {
+     "voice": "mr_f",
+     "seconds": 7.9,
+     "dur_match": 0.6067,
+     "cep_rmse": 0.1719,
+     "pitch_cents": 41.0,
+     "mel_db": 3.007,
+     "wave_corr": 0.11474,
+     "peak": 0.648
+    },
+    {
+     "voice": "mr_m",
+     "seconds": 7.64,
+     "dur_match": 0.6404,
+     "cep_rmse": 0.1934,
+     "pitch_cents": 43.9,
+     "mel_db": 2.744,
+     "wave_corr": 0.14145,
+     "peak": 0.486
+    },
+    {
+     "voice": "or_f",
+     "seconds": 7.26,
+     "dur_match": 0.6548,
+     "cep_rmse": 0.209,
+     "pitch_cents": 42.6,
+     "mel_db": 3.228,
+     "wave_corr": 0.02523,
+     "peak": 0.593
+    },
+    {
+     "voice": "or_m",
+     "seconds": 6.51,
+     "dur_match": 0.7024,
+     "cep_rmse": 0.1783,
+     "pitch_cents": 38.2,
+     "mel_db": 2.648,
+     "wave_corr": 0.10348,
+     "peak": 0.747
+    },
+    {
+     "voice": "pa_f",
+     "seconds": 7.88,
+     "dur_match": 0.593,
+     "cep_rmse": 0.1636,
+     "pitch_cents": 47.2,
+     "mel_db": 3.039,
+     "wave_corr": 0.05724,
+     "peak": 0.606
+    },
+    {
+     "voice": "pa_m",
+     "seconds": 7.26,
+     "dur_match": 0.7093,
+     "cep_rmse": 0.1664,
+     "pitch_cents": 39.0,
+     "mel_db": 2.74,
+     "wave_corr": 0.08608,
+     "peak": 0.637
+    },
+    {
+     "voice": "ta_f",
+     "seconds": 6.15,
+     "dur_match": 0.7176,
+     "cep_rmse": 0.1748,
+     "pitch_cents": 46.3,
+     "mel_db": 3.272,
+     "wave_corr": 0.02674,
+     "peak": 0.659
+    },
+    {
+     "voice": "ta_m",
+     "seconds": 5.36,
+     "dur_match": 0.7882,
+     "cep_rmse": 0.1682,
+     "pitch_cents": 39.2,
+     "mel_db": 2.629,
+     "wave_corr": 0.05575,
+     "peak": 0.55
+    },
+    {
+     "voice": "te_f",
+     "seconds": 5.73,
+     "dur_match": 0.7703,
+     "cep_rmse": 0.1761,
+     "pitch_cents": 43.5,
+     "mel_db": 3.216,
+     "wave_corr": -0.00968,
+     "peak": 0.814
+    },
+    {
+     "voice": "te_m",
+     "seconds": 5.41,
+     "dur_match": 0.7027,
+     "cep_rmse": 0.1855,
+     "pitch_cents": 78.7,
+     "mel_db": 3.127,
+     "wave_corr": 0.08726,
+     "peak": 0.666
+    }
+   ]
+  },
+  "ac-fp32_vo-int4@noqdq": {
+   "tag": "ac-fp32_vo-int4@noqdq",
+   "acoustic": "fp32",
+   "vocoder": "int4",
+   "rtf": 0.0929959056915677,
+   "voices": [
+    {
+     "voice": "kn_f",
+     "seconds": 7.76,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.533,
+     "wave_corr": 0.15832,
+     "peak": 0.636
+    },
+    {
+     "voice": "kn_m",
+     "seconds": 5.94,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.598,
+     "wave_corr": 0.02902,
+     "peak": 0.842
+    },
+    {
+     "voice": "en_f",
+     "seconds": 5.63,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.67,
+     "wave_corr": 0.19432,
+     "peak": 0.846
+    },
+    {
+     "voice": "en_m",
+     "seconds": 7.33,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.287,
+     "wave_corr": -0.03792,
+     "peak": 0.698
+    },
+    {
+     "voice": "as_f",
+     "seconds": 6.76,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.448,
+     "wave_corr": 0.11049,
+     "peak": 0.711
+    },
+    {
+     "voice": "as_m",
+     "seconds": 7.01,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.613,
+     "wave_corr": 0.17073,
+     "peak": 0.836
+    },
+    {
+     "voice": "bn_f",
+     "seconds": 6.77,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.327,
+     "wave_corr": 0.09351,
+     "peak": 0.859
+    },
+    {
+     "voice": "bn_m",
+     "seconds": 6.18,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.251,
+     "wave_corr": 0.08115,
+     "peak": 0.573
+    },
+    {
+     "voice": "gu_f",
+     "seconds": 7.56,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.699,
+     "wave_corr": 0.07205,
+     "peak": 0.876
+    },
+    {
+     "voice": "gu_m",
+     "seconds": 6.65,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.651,
+     "wave_corr": -0.0154,
+     "peak": 1.1
+    },
+    {
+     "voice": "hi_f",
+     "seconds": 7.08,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 5.023,
+     "wave_corr": 0.24568,
+     "peak": 0.876
+    },
+    {
+     "voice": "hi_m",
+     "seconds": 6.49,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.984,
+     "wave_corr": 0.11245,
+     "peak": 0.828
+    },
+    {
+     "voice": "ml_f",
+     "seconds": 7.1,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.985,
+     "wave_corr": 0.18571,
+     "peak": 0.63
+    },
+    {
+     "voice": "ml_m",
+     "seconds": 6.31,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.471,
+     "wave_corr": 0.01559,
+     "peak": 0.643
+    },
+    {
+     "voice": "mr_f",
+     "seconds": 8.08,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.801,
+     "wave_corr": 0.11393,
+     "peak": 0.845
+    },
+    {
+     "voice": "mr_m",
+     "seconds": 7.71,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.198,
+     "wave_corr": 0.02341,
+     "peak": 0.616
+    },
+    {
+     "voice": "or_f",
+     "seconds": 7.24,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.99,
+     "wave_corr": 0.12267,
+     "peak": 0.774
+    },
+    {
+     "voice": "or_m",
+     "seconds": 6.51,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.492,
+     "wave_corr": 0.11607,
+     "peak": 0.772
+    },
+    {
+     "voice": "pa_f",
+     "seconds": 8.17,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.781,
+     "wave_corr": 0.04427,
+     "peak": 1.013
+    },
+    {
+     "voice": "pa_m",
+     "seconds": 7.46,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.409,
+     "wave_corr": 0.0104,
+     "peak": 0.853
+    },
+    {
+     "voice": "ta_f",
+     "seconds": 6.0,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.928,
+     "wave_corr": 0.28223,
+     "peak": 0.785
+    },
+    {
+     "voice": "ta_m",
+     "seconds": 5.19,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.397,
+     "wave_corr": 0.04665,
+     "peak": 0.579
+    },
+    {
+     "voice": "te_f",
+     "seconds": 5.74,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.331,
+     "wave_corr": 0.22469,
+     "peak": 0.958
+    },
+    {
+     "voice": "te_m",
+     "seconds": 5.5,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0,
+     "pitch_cents": 0.0,
+     "mel_db": 4.423,
+     "wave_corr": 0.00502,
+     "peak": 0.84
+    }
+   ]
+  },
+  "int8": {
+   "tag": "int8",
+   "acoustic": "int8",
+   "vocoder": "int8",
+   "rtf": 0.051470502451946,
+   "voices": [
+    {
+     "voice": "kn_f",
+     "seconds": 7.77,
+     "dur_match": 0.9877,
+     "cep_rmse": 0.0156,
+     "pitch_cents": 4.4,
+     "mel_db": 1.767,
+     "wave_corr": 0.65904,
+     "peak": 0.579
+    },
+    {
+     "voice": "kn_m",
+     "seconds": 5.96,
+     "dur_match": 0.9753,
+     "cep_rmse": 0.0155,
+     "pitch_cents": 3.4,
+     "mel_db": 1.646,
+     "wave_corr": 0.59898,
+     "peak": 0.826
+    },
+    {
+     "voice": "en_f",
+     "seconds": 5.63,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0165,
+     "pitch_cents": 4.5,
+     "mel_db": 1.952,
+     "wave_corr": 0.4886,
+     "peak": 0.644
+    },
+    {
+     "voice": "en_m",
+     "seconds": 7.31,
+     "dur_match": 0.9508,
+     "cep_rmse": 0.0193,
+     "pitch_cents": 4.9,
+     "mel_db": 1.423,
+     "wave_corr": 0.75547,
+     "peak": 0.791
+    },
+    {
+     "voice": "as_f",
+     "seconds": 6.77,
+     "dur_match": 0.988,
+     "cep_rmse": 0.0187,
+     "pitch_cents": 4.2,
+     "mel_db": 1.777,
+     "wave_corr": 0.58941,
+     "peak": 0.61
+    },
+    {
+     "voice": "as_m",
+     "seconds": 7.05,
+     "dur_match": 0.9759,
+     "cep_rmse": 0.019,
+     "pitch_cents": 4.3,
+     "mel_db": 1.618,
+     "wave_corr": 0.50784,
+     "peak": 0.815
+    },
+    {
+     "voice": "bn_f",
+     "seconds": 6.78,
+     "dur_match": 0.92,
+     "cep_rmse": 0.0188,
+     "pitch_cents": 5.1,
+     "mel_db": 1.971,
+     "wave_corr": 0.36724,
+     "peak": 0.724
+    },
+    {
+     "voice": "bn_m",
+     "seconds": 6.18,
+     "dur_match": 0.96,
+     "cep_rmse": 0.0169,
+     "pitch_cents": 4.5,
+     "mel_db": 1.585,
+     "wave_corr": 0.5488,
+     "peak": 0.547
+    },
+    {
+     "voice": "gu_f",
+     "seconds": 7.56,
+     "dur_match": 0.95,
+     "cep_rmse": 0.0175,
+     "pitch_cents": 3.7,
+     "mel_db": 1.891,
+     "wave_corr": 0.25539,
+     "peak": 0.682
+    },
+    {
+     "voice": "gu_m",
+     "seconds": 6.65,
+     "dur_match": 0.9875,
+     "cep_rmse": 0.0188,
+     "pitch_cents": 5.2,
+     "mel_db": 1.741,
+     "wave_corr": 0.442,
+     "peak": 0.737
+    },
+    {
+     "voice": "hi_f",
+     "seconds": 7.09,
+     "dur_match": 0.961,
+     "cep_rmse": 0.0177,
+     "pitch_cents": 3.6,
+     "mel_db": 1.668,
+     "wave_corr": 0.6498,
+     "peak": 0.679
+    },
+    {
+     "voice": "hi_m",
+     "seconds": 6.5,
+     "dur_match": 0.961,
+     "cep_rmse": 0.0172,
+     "pitch_cents": 4.0,
+     "mel_db": 1.592,
+     "wave_corr": 0.60944,
+     "peak": 0.689
+    },
+    {
+     "voice": "ml_f",
+     "seconds": 7.12,
+     "dur_match": 0.951,
+     "cep_rmse": 0.0166,
+     "pitch_cents": 3.6,
+     "mel_db": 1.786,
+     "wave_corr": 0.61298,
+     "peak": 0.645
+    },
+    {
+     "voice": "ml_m",
+     "seconds": 6.28,
+     "dur_match": 0.9608,
+     "cep_rmse": 0.0186,
+     "pitch_cents": 5.4,
+     "mel_db": 1.612,
+     "wave_corr": 0.67117,
+     "peak": 0.787
+    },
+    {
+     "voice": "mr_f",
+     "seconds": 8.07,
+     "dur_match": 0.9663,
+     "cep_rmse": 0.0173,
+     "pitch_cents": 4.0,
+     "mel_db": 1.775,
+     "wave_corr": 0.54529,
+     "peak": 0.639
+    },
+    {
+     "voice": "mr_m",
+     "seconds": 7.71,
+     "dur_match": 0.9663,
+     "cep_rmse": 0.0159,
+     "pitch_cents": 3.5,
+     "mel_db": 1.641,
+     "wave_corr": 0.579,
+     "peak": 0.528
+    },
+    {
+     "voice": "or_f",
+     "seconds": 7.24,
+     "dur_match": 0.9762,
+     "cep_rmse": 0.0187,
+     "pitch_cents": 4.5,
+     "mel_db": 1.915,
+     "wave_corr": 0.43099,
+     "peak": 0.547
+    },
+    {
+     "voice": "or_m",
+     "seconds": 6.49,
+     "dur_match": 0.9762,
+     "cep_rmse": 0.0176,
+     "pitch_cents": 5.1,
+     "mel_db": 1.642,
+     "wave_corr": 0.52736,
+     "peak": 0.684
+    },
+    {
+     "voice": "pa_f",
+     "seconds": 8.21,
+     "dur_match": 0.9651,
+     "cep_rmse": 0.016,
+     "pitch_cents": 4.4,
+     "mel_db": 1.886,
+     "wave_corr": 0.32412,
+     "peak": 0.634
+    },
+    {
+     "voice": "pa_m",
+     "seconds": 7.49,
+     "dur_match": 0.9651,
+     "cep_rmse": 0.0159,
+     "pitch_cents": 3.0,
+     "mel_db": 1.639,
+     "wave_corr": 0.53392,
+     "peak": 0.745
+    },
+    {
+     "voice": "ta_f",
+     "seconds": 6.01,
+     "dur_match": 0.9882,
+     "cep_rmse": 0.0148,
+     "pitch_cents": 6.0,
+     "mel_db": 2.054,
+     "wave_corr": 0.33867,
+     "peak": 0.723
+    },
+    {
+     "voice": "ta_m",
+     "seconds": 5.2,
+     "dur_match": 0.9647,
+     "cep_rmse": 0.0205,
+     "pitch_cents": 9.8,
+     "mel_db": 1.664,
+     "wave_corr": 0.35798,
+     "peak": 0.552
+    },
+    {
+     "voice": "te_f",
+     "seconds": 5.75,
+     "dur_match": 0.9865,
+     "cep_rmse": 0.0151,
+     "pitch_cents": 4.8,
+     "mel_db": 1.868,
+     "wave_corr": 0.60667,
+     "peak": 0.675
+    },
+    {
+     "voice": "te_m",
+     "seconds": 5.5,
+     "dur_match": 1.0,
+     "cep_rmse": 0.0164,
+     "pitch_cents": 6.0,
+     "mel_db": 1.653,
+     "wave_corr": 0.57525,
+     "peak": 0.685
+    }
+   ]
+  },
+  "int8dyn": {
+   "tag": "int8dyn",
+   "acoustic": "int8dyn",
+   "vocoder": "int8dyn",
+   "rtf": 0.06215659875872617,
+   "voices": [
+    {
+     "voice": "kn_f",
+     "seconds": 7.74,
+     "dur_match": 0.9506,
+     "cep_rmse": 0.0237,
+     "pitch_cents": 6.1,
+     "mel_db": 1.726,
+     "wave_corr": 0.54421,
+     "peak": 0.566
+    },
+    {
+     "voice": "kn_m",
+     "seconds": 5.93,
+     "dur_match": 0.963,
+     "cep_rmse": 0.0243,
+     "pitch_cents": 5.5,
+     "mel_db": 1.649,
+     "wave_corr": 0.572,
+     "peak": 0.987
+    },
+    {
+     "voice": "en_f",
+     "seconds": 5.61,
+     "dur_match": 0.9344,
+     "cep_rmse": 0.0272,
+     "pitch_cents": 4.7,
+     "mel_db": 1.706,
+     "wave_corr": 0.49648,
+     "peak": 0.678
+    },
+    {
+     "voice": "en_m",
+     "seconds": 7.3,
+     "dur_match": 0.9672,
+     "cep_rmse": 0.0311,
+     "pitch_cents": 5.8,
+     "mel_db": 1.449,
+     "wave_corr": 0.71095,
+     "peak": 0.604
+    },
+    {
+     "voice": "as_f",
+     "seconds": 6.76,
+     "dur_match": 0.9639,
+     "cep_rmse": 0.026,
+     "pitch_cents": 4.4,
+     "mel_db": 1.663,
+     "wave_corr": 0.59527,
+     "peak": 0.597
+    },
+    {
+     "voice": "as_m",
+     "seconds": 7.03,
+     "dur_match": 0.9759,
+     "cep_rmse": 0.025,
+     "pitch_cents": 6.9,
+     "mel_db": 1.589,
+     "wave_corr": 0.56698,
+     "peak": 0.762
+    },
+    {
+     "voice": "bn_f",
+     "seconds": 6.75,
+     "dur_match": 0.92,
+     "cep_rmse": 0.0287,
+     "pitch_cents": 6.0,
+     "mel_db": 1.701,
+     "wave_corr": 0.54928,
+     "peak": 0.572
+    },
+    {
+     "voice": "bn_m",
+     "seconds": 6.2,
+     "dur_match": 0.92,
+     "cep_rmse": 0.0279,
+     "pitch_cents": 8.5,
+     "mel_db": 1.726,
+     "wave_corr": 0.40273,
+     "peak": 0.722
+    },
+    {
+     "voice": "gu_f",
+     "seconds": 7.52,
+     "dur_match": 0.95,
+     "cep_rmse": 0.0251,
+     "pitch_cents": 6.3,
+     "mel_db": 1.952,
+     "wave_corr": 0.21654,
+     "peak": 0.652
+    },
+    {
+     "voice": "gu_m",
+     "seconds": 6.64,
+     "dur_match": 0.9625,
+     "cep_rmse": 0.0255,
+     "pitch_cents": 5.4,
+     "mel_db": 1.734,
+     "wave_corr": 0.30409,
+     "peak": 0.682
+    },
+    {
+     "voice": "hi_f",
+     "seconds": 7.07,
+     "dur_match": 0.987,
+     "cep_rmse": 0.023,
+     "pitch_cents": 6.5,
+     "mel_db": 1.677,
+     "wave_corr": 0.47552,
+     "peak": 0.651
+    },
+    {
+     "voice": "hi_m",
+     "seconds": 6.43,
+     "dur_match": 0.9221,
+     "cep_rmse": 0.0251,
+     "pitch_cents": 4.7,
+     "mel_db": 1.572,
+     "wave_corr": 0.50793,
+     "peak": 0.674
+    },
+    {
+     "voice": "ml_f",
+     "seconds": 7.12,
+     "dur_match": 0.9804,
+     "cep_rmse": 0.0255,
+     "pitch_cents": 5.0,
+     "mel_db": 1.865,
+     "wave_corr": 0.5625,
+     "peak": 0.519
+    },
+    {
+     "voice": "ml_m",
+     "seconds": 6.29,
+     "dur_match": 0.9608,
+     "cep_rmse": 0.0289,
+     "pitch_cents": 6.0,
+     "mel_db": 1.601,
+     "wave_corr": 0.65437,
+     "peak": 0.859
+    },
+    {
+     "voice": "mr_f",
+     "seconds": 8.1,
+     "dur_match": 0.9326,
+     "cep_rmse": 0.0256,
+     "pitch_cents": 5.7,
+     "mel_db": 1.723,
+     "wave_corr": 0.40672,
+     "peak": 0.668
+    },
+    {
+     "voice": "mr_m",
+     "seconds": 7.71,
+     "dur_match": 0.9775,
+     "cep_rmse": 0.0249,
+     "pitch_cents": 5.6,
+     "mel_db": 1.549,
+     "wave_corr": 0.6298,
+     "peak": 0.467
+    },
+    {
+     "voice": "or_f",
+     "seconds": 7.19,
+     "dur_match": 0.9048,
+     "cep_rmse": 0.0273,
+     "pitch_cents": 7.9,
+     "mel_db": 1.937,
+     "wave_corr": 0.43782,
+     "peak": 0.584
+    },
+    {
+     "voice": "or_m",
+     "seconds": 6.53,
+     "dur_match": 0.9405,
+     "cep_rmse": 0.0252,
+     "pitch_cents": 7.3,
+     "mel_db": 1.59,
+     "wave_corr": 0.56027,
+     "peak": 0.656
+    },
+    {
+     "voice": "pa_f",
+     "seconds": 8.18,
+     "dur_match": 0.9302,
+     "cep_rmse": 0.0277,
+     "pitch_cents": 7.6,
+     "mel_db": 1.75,
+     "wave_corr": 0.20049,
+     "peak": 0.618
+    },
+    {
+     "voice": "pa_m",
+     "seconds": 7.44,
+     "dur_match": 0.9535,
+     "cep_rmse": 0.0254,
+     "pitch_cents": 4.9,
+     "mel_db": 1.532,
+     "wave_corr": 0.47236,
+     "peak": 0.793
+    },
+    {
+     "voice": "ta_f",
+     "seconds": 6.01,
+     "dur_match": 0.9882,
+     "cep_rmse": 0.0249,
+     "pitch_cents": 5.6,
+     "mel_db": 1.968,
+     "wave_corr": 0.3674,
+     "peak": 0.671
+    },
+    {
+     "voice": "ta_m",
+     "seconds": 5.15,
+     "dur_match": 0.9529,
+     "cep_rmse": 0.0283,
+     "pitch_cents": 7.6,
+     "mel_db": 1.579,
+     "wave_corr": 0.60337,
+     "peak": 0.579
+    },
+    {
+     "voice": "te_f",
+     "seconds": 5.73,
+     "dur_match": 0.9595,
+     "cep_rmse": 0.0262,
+     "pitch_cents": 6.3,
+     "mel_db": 1.726,
+     "wave_corr": 0.55625,
+     "peak": 0.788
+    },
+    {
+     "voice": "te_m",
+     "seconds": 5.5,
+     "dur_match": 0.9595,
+     "cep_rmse": 0.0246,
+     "pitch_cents": 8.4,
+     "mel_db": 1.674,
+     "wave_corr": 0.43902,
+     "peak": 0.741
+    }
+   ]
+  },
+  "int4": {
+   "tag": "int4",
+   "acoustic": "int4",
+   "vocoder": "int4",
+   "rtf": 0.056440216333870454,
+   "voices": [
+    {
+     "voice": "kn_f",
+     "seconds": 7.48,
+     "dur_match": 0.642,
+     "cep_rmse": 0.1579,
+     "pitch_cents": 55.0,
+     "mel_db": 5.281,
+     "wave_corr": 0.03697,
+     "peak": 0.698
+    },
+    {
+     "voice": "kn_m",
+     "seconds": 5.72,
+     "dur_match": 0.6049,
+     "cep_rmse": 0.1851,
+     "pitch_cents": 58.3,
+     "mel_db": 5.135,
+     "wave_corr": 0.03847,
+     "peak": 0.917
+    },
+    {
+     "voice": "en_f",
+     "seconds": 5.55,
+     "dur_match": 0.5902,
+     "cep_rmse": 0.1599,
+     "pitch_cents": 37.5,
+     "mel_db": 5.228,
+     "wave_corr": 0.00145,
+     "peak": 0.694
+    },
+    {
+     "voice": "en_m",
+     "seconds": 7.13,
+     "dur_match": 0.5738,
+     "cep_rmse": 0.1909,
+     "pitch_cents": 61.6,
+     "mel_db": 4.916,
+     "wave_corr": 0.05585,
+     "peak": 0.63
+    },
+    {
+     "voice": "as_f",
+     "seconds": 6.63,
+     "dur_match": 0.7349,
+     "cep_rmse": 0.18,
+     "pitch_cents": 34.0,
+     "mel_db": 5.182,
+     "wave_corr": 0.09037,
+     "peak": 1.063
+    },
+    {
+     "voice": "as_m",
+     "seconds": 6.73,
+     "dur_match": 0.5904,
+     "cep_rmse": 0.1769,
+     "pitch_cents": 45.5,
+     "mel_db": 5.167,
+     "wave_corr": 0.05334,
+     "peak": 0.835
+    },
+    {
+     "voice": "bn_f",
+     "seconds": 6.44,
+     "dur_match": 0.72,
+     "cep_rmse": 0.2253,
+     "pitch_cents": 97.5,
+     "mel_db": 5.943,
+     "wave_corr": -0.02015,
+     "peak": 0.75
+    },
+    {
+     "voice": "bn_m",
+     "seconds": 6.08,
+     "dur_match": 0.72,
+     "cep_rmse": 0.2448,
+     "pitch_cents": 67.8,
+     "mel_db": 4.902,
+     "wave_corr": 0.01427,
+     "peak": 0.71
+    },
+    {
+     "voice": "gu_f",
+     "seconds": 7.42,
+     "dur_match": 0.6875,
+     "cep_rmse": 0.156,
+     "pitch_cents": 47.3,
+     "mel_db": 5.482,
+     "wave_corr": -0.00025,
+     "peak": 0.776
+    },
+    {
+     "voice": "gu_m",
+     "seconds": 6.36,
+     "dur_match": 0.575,
+     "cep_rmse": 0.1704,
+     "pitch_cents": 52.7,
+     "mel_db": 5.128,
+     "wave_corr": 0.037,
+     "peak": 0.923
+    },
+    {
+     "voice": "hi_f",
+     "seconds": 6.89,
+     "dur_match": 0.6883,
+     "cep_rmse": 0.1759,
+     "pitch_cents": 44.9,
+     "mel_db": 6.01,
+     "wave_corr": -0.00282,
+     "peak": 0.805
+    },
+    {
+     "voice": "hi_m",
+     "seconds": 6.4,
+     "dur_match": 0.7273,
+     "cep_rmse": 0.1711,
+     "pitch_cents": 47.1,
+     "mel_db": 5.617,
+     "wave_corr": 0.03839,
+     "peak": 1.003
+    },
+    {
+     "voice": "ml_f",
+     "seconds": 7.13,
+     "dur_match": 0.7549,
+     "cep_rmse": 0.1984,
+     "pitch_cents": 47.0,
+     "mel_db": 5.829,
+     "wave_corr": 0.11762,
+     "peak": 0.618
+    },
+    {
+     "voice": "ml_m",
+     "seconds": 5.72,
+     "dur_match": 0.6275,
+     "cep_rmse": 0.2245,
+     "pitch_cents": 51.3,
+     "mel_db": 5.091,
+     "wave_corr": 0.08006,
+     "peak": 0.706
+    },
+    {
+     "voice": "mr_f",
+     "seconds": 7.89,
+     "dur_match": 0.5955,
+     "cep_rmse": 0.1729,
+     "pitch_cents": 40.9,
+     "mel_db": 5.485,
+     "wave_corr": 0.04316,
+     "peak": 0.933
+    },
+    {
+     "voice": "mr_m",
+     "seconds": 7.63,
+     "dur_match": 0.6067,
+     "cep_rmse": 0.1946,
+     "pitch_cents": 44.1,
+     "mel_db": 4.608,
+     "wave_corr": 0.04952,
+     "peak": 0.6
+    },
+    {
+     "voice": "or_f",
+     "seconds": 7.27,
+     "dur_match": 0.6667,
+     "cep_rmse": 0.209,
+     "pitch_cents": 42.9,
+     "mel_db": 5.826,
+     "wave_corr": 0.003,
+     "peak": 0.767
+    },
+    {
+     "voice": "or_m",
+     "seconds": 6.51,
+     "dur_match": 0.7024,
+     "cep_rmse": 0.1778,
+     "pitch_cents": 38.0,
+     "mel_db": 4.725,
+     "wave_corr": 0.06255,
+     "peak": 0.813
+    },
+    {
+     "voice": "pa_f",
+     "seconds": 7.88,
+     "dur_match": 0.6047,
+     "cep_rmse": 0.1639,
+     "pitch_cents": 47.1,
+     "mel_db": 5.355,
+     "wave_corr": 0.11698,
+     "peak": 1.051
+    },
+    {
+     "voice": "pa_m",
+     "seconds": 7.24,
+     "dur_match": 0.686,
+     "cep_rmse": 0.1666,
+     "pitch_cents": 39.7,
+     "mel_db": 4.738,
+     "wave_corr": -0.01058,
+     "peak": 0.765
+    },
+    {
+     "voice": "ta_f",
+     "seconds": 6.15,
+     "dur_match": 0.7059,
+     "cep_rmse": 0.1747,
+     "pitch_cents": 46.1,
+     "mel_db": 5.794,
+     "wave_corr": -1e-05,
+     "peak": 0.909
+    },
+    {
+     "voice": "ta_m",
+     "seconds": 5.37,
+     "dur_match": 0.7765,
+     "cep_rmse": 0.1686,
+     "pitch_cents": 39.8,
+     "mel_db": 4.731,
+     "wave_corr": 0.18046,
+     "peak": 0.707
+    },
+    {
+     "voice": "te_f",
+     "seconds": 5.73,
+     "dur_match": 0.7703,
+     "cep_rmse": 0.1766,
+     "pitch_cents": 44.4,
+     "mel_db": 4.919,
+     "wave_corr": -0.01595,
+     "peak": 0.764
+    },
+    {
+     "voice": "te_m",
+     "seconds": 5.4,
+     "dur_match": 0.6892,
+     "cep_rmse": 0.186,
+     "pitch_cents": 78.5,
+     "mel_db": 5.044,
+     "wave_corr": -0.01586,
+     "peak": 0.825
+    }
+   ]
+  }
+ }
+}

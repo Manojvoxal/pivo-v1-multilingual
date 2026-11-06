@@ -195,7 +195,7 @@ export const lexiconLoaded = () => LEXICON !== null;
 /** True when the text can reach a dictionary lookup (English path, or Latin words in Kannada). */
 export const lexiconNeeded = (text) => /[A-Za-z]/.test(text) || !HAS_KANNADA.test(text);
 
-function lookup(word) {
+export function lookup(word) {
   if (!LEXICON) throw new FrontendError("lexicon", "the English dictionary is not loaded yet");
   const v = LEXICON.get(word);
   return v === undefined ? undefined : v.split(" ");

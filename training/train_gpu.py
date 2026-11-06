@@ -22,6 +22,12 @@ Stage 2, spectral refinement of each run's best.pt (decoder only, both widths in
   modal run --detach train_gpu.py --stage refine            # multi_w96 -> multi_w96_refine, same for w128
   modal run --detach train_gpu.py --stage refine --widths 128
 
+Stage 3, ONNX export for the runtime (CPU, ~2 min per model; uses refined.pt, else best.pt):
+  modal run train_gpu.py --stage export                     # multi_w96_refine + multi_w128_refine
+  modal run train_gpu.py --stage export --from-runs multi_w128   # a stage-1 run instead
+  modal volume get pivo-multi-runs export/multi_w128_refine ../models/
+  -> models/multi_w128_refine/{model_manifest.json, onnx/encoder.onnx (tokens, voice, lang, lengths), ...}
+
 Run names: multi_w96, multi_w128 (smoke: smoke_w96, smoke_w128). Fetch samples / checkpoints:
   modal volume ls  pivo-multi-runs multi_w128/samples
   mkdir runs\\multi_w128
@@ -48,10 +54,20 @@ image = (
         f"snapshot_download('empero-ai/PiVo-1.4M', local_dir='{PIVO}', "
         "allow_patterns=['checkpoints/acoustic.pt', 'onnx/*'])\""
     )
+    .pip_install("onnx==1.17.0")  # ONNX export (own layer, so the torch / PiVo layers stay cached)
     .env({"PYTHONUNBUFFERED": "1"})
     .add_local_dir(HERE / "pivo_train", remote_path="/root/pivo_train")
     .add_local_dir(HERE / "tests", remote_path="/root/tests")
+    # export: the training frontend (parity sentences), the script, CMU dict, licence files
+    .add_local_dir(HERE / "data_pipeline_multi" / "pivo_multi", remote_path="/root/pivo_multi")
+    .add_local_file(HERE / "export_onnx.py", remote_path="/root/export_onnx.py")
+    .add_local_file(HERE.parent / "src" / "pivo" / "resources" / "cmudict.dict", remote_path="/root/cmudict.dict")
 )
+for _f in ("LICENSE", "NOTICE", "THIRD_PARTY.md"):
+    if (HERE.parent / _f).exists():
+        image = image.add_local_file(HERE.parent / _f, remote_path=f"{PIVO}/{_f}")
+if (HERE.parent / "LICENSES").is_dir():
+    image = image.add_local_dir(HERE.parent / "LICENSES", remote_path=f"{PIVO}/LICENSES")
 
 app = modal.App("pivo-multi-train", image=image)
 data_vol = modal.Volume.from_name(DATA_VOLUME)
@@ -192,6 +208,24 @@ def pack_cache(data_root: str):
     return round(time.time() - t0)
 
 
+@app.function(cpu=4, memory=16384, timeout=3600, volumes=VOLS)
+def export_model(run_name: str, default_voice: str = "kn_f", name: str = ""):
+    """/runs/<run_name>/refined.pt (else best.pt) -> /runs/export/<run_name>/ (PiVo model folder)."""
+    import os
+    import subprocess
+    import sys
+    ckpt = next((f"/runs/{run_name}/{f}" for f in ("refined.pt", "best.pt")
+                 if os.path.exists(f"/runs/{run_name}/{f}")), None)
+    if ckpt is None:
+        raise SystemExit(f"/runs/{run_name}: no refined.pt or best.pt")
+    out = f"/runs/export/{run_name}"
+    cmd = [sys.executable, "/root/export_onnx.py", "--ckpt", ckpt, "--pivo-dir", PIVO,
+           "--cmudict", "/root/cmudict.dict", "--out", out, "--default-voice", default_voice]
+    subprocess.run(cmd + (["--name", name] if name else []), check=True, cwd="/root")
+    runs_vol.commit()
+    return {"run": run_name, "ckpt": ckpt, "out": out}
+
+
 # The orchestrator only waits on the GPU jobs. Non-preemptible containers bill CPU/RAM at 3x,
 # so it stays tiny; the heavy cache build runs in pack_cache.
 @app.function(cpu=1, memory=2048, timeout=24 * 3600, volumes=VOLS, **_ORCH)
@@ -234,8 +268,13 @@ def run(stage: str = "train", smoke: bool = False, widths: str = DEFAULT_WIDTHS,
         steps: int = 0, batch_size: int = 0, lr: float = 0.0, gpu: str = "", from_runs: str = ""):
     if preset not in PRESETS:
         raise SystemExit(f"--preset must be one of {list(PRESETS)}")
+    if stage == "export":  # CPU only and quick: run straight from here
+        sources = [s for s in from_runs.split(",") if s] or [f"{n}_refine" for _, n in _names(widths, smoke)]
+        for r in export_model.starmap([(s,) for s in sources], return_exceptions=True):
+            print(r if isinstance(r, dict) else f"FAILED: {r!r}")
+        return
     if stage not in ("train", "refine"):
-        raise SystemExit("--stage must be train or refine")
+        raise SystemExit("--stage must be train, refine or export")
     res = orchestrate.remote(stage=stage, widths=widths, smoke=smoke, preset=preset, steps=steps,
                              batch_size=batch_size, lr=lr, gpu=gpu, from_runs=from_runs)
     for r in res:

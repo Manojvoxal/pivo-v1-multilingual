@@ -222,3 +222,22 @@ def test_pipeline_local():
 if __name__ == "__main__":
     with tempfile.TemporaryDirectory() as tmp:
         run(tmp)
+
+
+def test_speech_up_to_the_last_frame_keeps_the_clip():
+    """Speech that runs to the end of the recording (no trailing silence, final punctuation):
+    the last phone's end rounds past the last whole frame. The clip must be kept, with the
+    overshoot taken from the last phone (this used to raise negative_duration)."""
+    from pivo_multi import prep
+    from pivo_multi.frontend import phonemize
+    from pivo_multi.symbols import mfa_phone
+    ph = phonemize("ನಮಸ್ಕಾರ, ನೀವು.", "kn")
+    labels = [mfa_phone(p) for _, w in ph.words for p in w]
+    phones, t = [(0.0, 0.2, "sil")], 0.2
+    for label in labels:
+        phones.append((round(t, 3), round(t + 0.05, 3), label))
+        t += 0.05
+    n_frames = int((t - 0.004) * 16000) // 160
+    start, end, dur = prep.durations_from_alignment(ph, phones, n_frames, margin=3)
+    assert sum(dur) == end - start
+    assert min(d for d, s in zip(dur, ph.symbols) if s.startswith("in_")) >= 1

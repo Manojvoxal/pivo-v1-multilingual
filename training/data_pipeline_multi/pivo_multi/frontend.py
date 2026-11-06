@@ -8,16 +8,19 @@ Token layout is PiVo's:
   language's own script uses that language's rules; a word in another Indic script uses
   that script's default language; Latin-script words are read with the CMU lexicon
   (code-mixing), giving ARPAbet tokens.
-* Training mode (strict=True, the default) rejects text with digits (numbers are not
-  expanded yet for most languages), unknown characters, or English words missing from
-  the CMU lexicon, so those clips are dropped instead of mis-labelled.
+* Training mode (strict=True, the default) rejects text with digits, unknown characters,
+  or English words missing from the CMU lexicon, so those clips are dropped instead of
+  mis-labelled.
+* numbers=True (inference) first writes numbers, dates, times, money, units and symbols
+  out as words (numnorm.py, for hi mr gu pa bn or as ta te ml; the web app has the same
+  rules in JavaScript and uses PiVo's own readers for Kannada and English).
 """
 
 import re
 import unicodedata
 from dataclasses import dataclass
 
-from . import alphabetic, brahmic, english
+from . import alphabetic, brahmic, english, numnorm
 from .langs import LANG, SCRIPT_DEFAULT_LANG, lang_scripts
 from .scripts import BRAHMIC_BASE, ZWJ, script_of_word
 from .symbols import PIVO_SPECIAL, SYMBOL_TO_ID
@@ -118,7 +121,9 @@ def english_word(word: str):
     return phones
 
 
-def phonemize_indic(text: str, lang: str, strict: bool = True) -> Phonemized:
+def phonemize_indic(text: str, lang: str, strict: bool = True, numbers: bool = False) -> Phonemized:
+    if numbers and lang in numnorm.DATA:
+        text = numnorm.normalize_numbers(text, lang)
     if strict and _DIGIT_RE.search(text):
         raise FrontendError("digits: numbers are not expanded in training data")
     normalized = normalize(text)
@@ -154,12 +159,12 @@ def phonemize_en(text: str, strict: bool = True) -> Phonemized:
     return _assemble("en", normalized, items)
 
 
-def phonemize(text: str, lang: str, strict: bool = True) -> Phonemized:
+def phonemize(text: str, lang: str, strict: bool = True, numbers: bool = False) -> Phonemized:
     if lang == "en":
         return phonemize_en(text, strict)
     if lang not in LANG:
         raise ValueError(f"unknown language {lang!r}")
-    return phonemize_indic(text, lang, strict)
+    return phonemize_indic(text, lang, strict, numbers)
 
 
 def drop_reason(exc: Exception) -> str:

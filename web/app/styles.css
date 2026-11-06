@@ -19,7 +19,9 @@
   --radius-lg: 18px;
   --shadow: 0 1px 2px rgba(38, 32, 23, .04), 0 8px 35px rgba(38, 32, 23, .05);
   --font: "Google Sans", "Google Sans Text", "DM Sans", "Noto Sans Kannada", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
-  --font-kn: "Noto Sans Kannada", "Nirmala UI", "Kannada Sangam MN", "Tunga", "DM Sans", sans-serif;
+  --font-kn: "Noto Sans Kannada", "Noto Sans Devanagari", "Noto Sans Bengali", "Noto Sans Tamil", "Noto Sans Telugu",
+    "Noto Sans Gujarati", "Noto Sans Gurmukhi", "Noto Sans Malayalam", "Noto Sans Oriya", "Nirmala UI",
+    "Kannada Sangam MN", "Tunga", "DM Sans", sans-serif;
   color-scheme: light;
 }
 
@@ -137,6 +139,17 @@ h1 { margin: 0; font-size: clamp(24px, 2.4vw, 30px); line-height: 1.15; letter-s
   -webkit-appearance: none; appearance: none; border: 0; background: transparent; outline: none;
   padding: 0 22px 0 0; margin: 0; font: inherit; font-weight: 600; color: var(--ink); cursor: pointer;
 }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.speaker-chip.voice-chip { padding-left: 10px; }
+.chip-icon { width: 18px; height: 18px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.select-box { position: relative; display: flex; align-items: center; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.select-box:focus-within { box-shadow: 0 0 0 2px var(--accent); }
+.select-box select {
+  -webkit-appearance: none; appearance: none; width: 100%; min-height: 42px; padding: 0 36px 0 12px;
+  border: 0; border-radius: 10px; background: transparent; outline: none; font: inherit; font-weight: 500; color: var(--ink); cursor: pointer;
+}
+.select-box .chev { position: absolute; right: 12px; width: 16px; height: 16px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.speaker-chip select, .select-box select { font-family: var(--font-kn); }
 .speaker-chip .chev { position: absolute; right: 10px; width: 16px; height: 16px; fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
 .lang-tip {
   margin: 0 16px 12px; padding: 8px 12px; border-radius: 10px;

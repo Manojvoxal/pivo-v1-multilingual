@@ -170,8 +170,8 @@ def durations_from_alignment(phonemized, phones, num_audio_frames, margin=3,
         if k + 1 < len(phone_token_idx):
             gap = bounds[k + 1][0] - b1               # silence (or rounding) before next phone
             between = tokens[ti + 1: phone_token_idx[k + 1]]
-            if not between:
-                dur[ti] += gap                        # inside a word: keep with the phone
+            if not between or gap < 0:
+                dur[ti] += gap                        # inside a word (or a rounding overlap): keep with the phone
             else:
                 punct = [j for j in range(ti + 1, phone_token_idx[k + 1]) if tokens[j] not in ("<space>",)]
                 target = punct[0] if punct else ti + between.index("<space>") + 1
@@ -179,6 +179,12 @@ def durations_from_alignment(phonemized, phones, num_audio_frames, margin=3,
     # trailing silence + margin -> final punctuation if present, else last phone
     tail = n - bounds[-1][1]
     last_ti = phone_token_idx[-1]
+    if tail < 0:
+        # speech runs to the very end of the recording: the last phone's end rounds past the last
+        # whole frame (len(pcm) // HOP). Shorten that phone instead of dropping the clip
+        # (this dropped ~35 % of Malayalam / Odia clips in the first full build).
+        dur[last_ti] += tail
+        tail = 0
     after = [j for j in range(last_ti + 1, len(tokens)) if tokens[j] not in ("<eos>", "<space>")]
     dur[after[0] if after else last_ti] += tail
 
