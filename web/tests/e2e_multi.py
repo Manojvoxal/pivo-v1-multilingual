@@ -35,6 +35,8 @@ NAMES = {"kn": "kannada", "en": "english", "hi": "hindi", "te": "telugu", "ta": 
 EXTRA = {"hi": "मेरा phone कहाँ है? कीमत ₹1,250 है और 72% छूट 10:30 बजे तक है।",
          "kn": "ನನ್ನ phone ಬ್ಯಾಟರಿ 20% ಇದೆ, ಶುಲ್ಕ ₹1,250 ಮಾತ್ರ."}
 # number-heavy text per language: the page must read it exactly as pivo_multi/numnorm.py does
+SEMIOTIC = "Call 020 7946 0018 before 6:15. Pay $5.99 by 15/08/2024, it is 25°C and 1/2 done."
+
 NUMBERS = {
     "hi": "15 अगस्त 1947 को भारत आज़ाद हुआ। 2024 में GDP 6.5% बढ़ी। टिकट ₹1,250 का है, कॉल 9876543210।",
     "mr": "१५ ऑगस्ट १९४७ रोजी भारत स्वतंत्र झाला. २०२४ मध्ये ६.५% वाढ झाली. तिकीट रु. १,२५० आहे.",
@@ -251,6 +253,11 @@ def main():
             want = py_frontend.normalize(numnorm.normalize_numbers(text, lang))
             check(len(audio) > 16000 and read_as == want, f"{lang} numbers read as: {read_as}"
                   + ("" if read_as == want else f"\n     Python: {want}"))
+        # telephone + time (the sentence that used to break): no digit may reach the model in any language
+        for lang in ["en"] + [x for x in a.langs.split(",") if x != "en"]:
+            audio, _ = generate(lang, "f", SEMIOTIC)
+            read_as = page.text_content("#read-as-text") or ""
+            check(len(audio) > 16000 and read_as and not re.search(r"[0-9:]", read_as), f"{lang} phone + time read as: {read_as}")
         page.select_option("#lang-chip", "en")
         page.fill("#text", "नमस्ते, आप कैसे हैं? यह हिन्दी में लिखा है।")
         page.dispatch_event("#text", "input")

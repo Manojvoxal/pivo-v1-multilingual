@@ -546,6 +546,14 @@ export const NUMBERS_IN_ENGLISH = (lang) => lang !== "kn" && lang !== "en" && !N
 const EXTRA_LEXICON = {
   lakh: ["L", "AA1", "K"], lakhs: ["L", "AA1", "K", "S"], crore: ["K", "R", "AO1", "R"], crores: ["K", "R", "AO1", "R", "Z"],
   rupee: ["R", "UW1", "P", "IY0"], rupees: ["R", "UW1", "P", "IY0", "Z"], paise: ["P", "AY1", "S", "EY0"], paisa: ["P", "AY1", "S", "AA0"],
+  gigabit: ["G", "IH1", "G", "AH0", "B", "IH2", "T"], gigabits: ["G", "IH1", "G", "AH0", "B", "IH2", "T", "S"],
+  gigahertz: ["G", "IH1", "G", "AH0", "HH", "ER2", "T", "S"], kilohertz: ["K", "IH1", "L", "AH0", "HH", "ER2", "T", "S"],
+  megabits: ["M", "EH1", "G", "AH0", "B", "IH2", "T", "S"],
+  megapixel: ["M", "EH1", "G", "AH0", "P", "IH2", "K", "S", "AH0", "L"],
+  megapixels: ["M", "EH1", "G", "AH0", "P", "IH2", "K", "S", "AH0", "L", "Z"],
+  milliamp: ["M", "IH1", "L", "IY0", "AE2", "M", "P"],
+  covid: ["K", "OW1", "V", "IH0", "D"], isro: ["IH1", "S", "R", "OW0"], saarc: ["S", "AA1", "R", "K"],
+  sebi: ["S", "EH1", "B", "IY0"], neet: ["N", "IY1", "T"],
 };
 
 function englishWord(word, unknown) {

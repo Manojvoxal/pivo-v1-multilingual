@@ -10,12 +10,14 @@ to JSON. ``web/tests/parity.mjs`` then runs the same sentences through
     node web/tests/parity.mjs web/tests/parity_ref.json web/dist/lexicon/cmudict.txt
 """
 
+import ast
 import json
 import random
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "src"))
 from pivo import kannada  # noqa: E402
 
 HAND = [
@@ -50,6 +52,13 @@ HAND = [
     "2026-02-30 was not a date.", "3/4 of the cake", "The 21st and 22nd and 23rd and 101st.", "-5 and 3.14 and -2.5",
     "1234567890123456789 stars", "Dr. Rao and Mr. Gowda vs. Prof. Bhat, etc. at St. Mark's.", "CPU and GPU and NASA",
 ]
+
+def semiotic_sentences():
+    """The one-per-class sentences of training/data_pipeline_multi/tests/test_semiotic.py."""
+    tree = ast.parse((ROOT / "training" / "data_pipeline_multi" / "tests" / "test_semiotic.py").read_text(encoding="utf-8"))
+    return next(ast.literal_eval(node.value) for node in tree.body
+                if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "SENTENCES")
+
 
 KN_WORDS = ["ಸಭೆ", "ಬೆಲೆ", "ಮನೆ", "ಜನ", "ಶಾಲೆ", "ರೈಲು", "ಬಸ್", "ಸಂಖ್ಯೆ", "ವರ್ಷ", "ಕೆಜಿ", "ತಾಪಮಾನ", "ಅವರು",
             "ಇದೆ", "ನಡೆಯಿತು", "ಆಗಿದೆ", "ಬಂದರು", "ಕರೆ", "ಮಾಡಿ", "ಒಟ್ಟು", "ದಿನ"]
@@ -194,7 +203,7 @@ def category(error):
 
 def main(out_path):
     r = random.Random(20261103)
-    cases = list(HAND)
+    cases = list(HAND) + semiotic_sentences()
     cases += [kn_template(r) for _ in range(4000)]
     cases += [en_template(r) for _ in range(2500)]
     cases += [fuzz(r, 0.7) for _ in range(3000)]

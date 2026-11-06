@@ -10,6 +10,7 @@ numbers, currencies, dates, times, units, suffixes, acronyms, symbols and native
 """
 
 import argparse
+import ast
 import json
 import random
 import sys
@@ -38,6 +39,13 @@ CASES = [
 ]
 
 SCRIPT_BASE = numnorm.SCRIPT_BASE
+
+
+def semiotic_sentences():
+    """The one-per-class sentences of training/data_pipeline_multi/tests/test_semiotic.py."""
+    tree = ast.parse((ROOT / "training" / "data_pipeline_multi" / "tests" / "test_semiotic.py").read_text(encoding="utf-8"))
+    return next(ast.literal_eval(node.value) for node in tree.body
+                if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", "") == "SENTENCES")
 
 
 def block_letters(lang):
@@ -151,7 +159,7 @@ def main():
     rows = []
     for lang in numnorm.LANGS:
         letters = block_letters(lang)
-        texts = list(CASES) + [str(i) for i in range(10001)]
+        texts = list(CASES) + semiotic_sentences() + [str(i) for i in range(10001)]
         texts += [str(rng.randint(0, 10 ** 15 - 1)) for _ in range(2000)]
         texts += [native_digits(c, lang, rng) for c in CASES]
         texts += [random_sentence(lang, rng, letters) for _ in range(a.n)]

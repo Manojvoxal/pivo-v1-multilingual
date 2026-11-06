@@ -2,11 +2,23 @@
 // (hi mr gu pa bn or as ta te ml). Line-by-line port of
 // training/data_pipeline_multi/pivo_multi/numnorm.py; both read the same word data
 // (numwords.js is numwords.json as a module). web/tests/numbers_parity.* checks that the two
-// give identical text. Kannada and English keep their own normalisers (frontend.js).
+// give identical text. Kannada and English keep their own normalisers (frontend.js). semiotic.js (phones,
+// e-mail / URLs, date formats, fractions, math, serial codes ...) runs first, as in Python.
 
 import DATA from "./numwords.js";
+import { prenormalize, WORDS as SEMIOTIC } from "./semiotic.js";
 
 export const NUMBER_LANGS = Object.keys(DATA);
+for (const [lang, D] of Object.entries(DATA)) D.measures = { ...SEMIOTIC[lang].units, ...D.measures };
+// English words before a year in mixed text: "in 1947", "since 1857"
+const EN_YEAR_BEFORE = ["in", "In", "since", "Since", "from", "From", "till", "Till", "until", "Until", "year", "Year",
+  "during", "During", "circa", "around", "by", "to", "before", "after", "Before", "After"];
+const YEAR_AFTER_EXTRA = ["AD", "BC", "CE", "BCE"];
+/** First word / suffix after the year in the language's decade phrase ("का" in "{y} का दशक"). */
+function decadeFollow(lang) {
+  const rest = SEMIOTIC[lang].decade.split("{y}").slice(1).join("{y}").replace(/^-+/u, "");
+  return rest.startsWith(" ") ? rest.split(" ")[1] : rest.split(" ")[0];
+}
 const SCRIPT_BASE = { hi: 0x900, mr: 0x900, bn: 0x980, as: 0x980, pa: 0xA00, gu: 0xA80, or: 0xB00, ta: 0xB80, te: 0xC00, ml: 0xD00 };
 const MAX_DIGITS = 15;
 const ACRONYM_KEEP = new Set(["NASA", "ISRO", "COVID", "UNESCO", "UNICEF", "NATO", "AIDS", "SAARC", "ASEAN", "OPEC",
@@ -202,22 +214,23 @@ function patterns(lang) {
     iso: R(`(?<![0-9])([0-9]{4})-([0-9]{2})-([0-9]{2})(?![0-9])${SUF}`),
     dmy: R(`(?<![0-9.])([0-9]{1,2})[/.-]([0-9]{1,2})[/.-]([0-9]{4})(?![0-9])${SUF}`),
     monthYear: R(`(?<![A-Za-z${L}])(${alt(months)}),? ([0-9]{4})(?![0-9])${SUF}`),
-    time: R(`(?<![0-9])([01]?[0-9]|2[0-3]):([0-5][0-9])(?::[0-5][0-9])?(?: ?([AaPp]\\.?[Mm]\\.?))?(?![A-Za-z])${clockWords}${SUF}`),
-    timeAmpm: R(`(?<![0-9.,])(1[0-2]|0?[1-9]) ?([AaPp]\\.?[Mm]\\.?)(?![A-Za-z])${SUF}`),
+    time: R(`(?<![0-9])([01]?[0-9]|2[0-3]):([0-5][0-9])(?::[0-5][0-9])?(?: ?([AaPp](?:\\.[Mm]\\.|[Mm])))?(?![A-Za-z])${clockWords}${SUF}`),
+    timeAmpm: R(`(?<![0-9.,])(1[0-2]|0?[1-9]) ?([AaPp](?:\\.[Mm]\\.|[Mm]))(?![A-Za-z])${SUF}`),
     money: R(`(${alt(Object.values(cur).flat())}) ?(${NUM})(?: ?(${scaleAlt})(?![A-Za-z${L}]))?(?![0-9])${SUF}`),
     currencyOf,
     percent: R(`(${NUM}) ?%${SUF}`),
-    range: R(`(?<![0-9.,])([0-9]+) ?[-–] ?([0-9]+)(?![0-9.,])(?: ?(${units})(?![A-Za-z])| ?(%))?${SUF}`),
+    range: R(`(?<![0-9.,])([0-9]+) ?[-–] ?([0-9]+)(?![0-9]|[.,][0-9])(?: ?(${units})(?![A-Za-z])| ?(%))?${SUF}`),
     negative: R(`(?<![0-9A-Za-z${L}])-(?=[0-9])`),
     units: R(`(${NUM}) ?(${units})(?![A-Za-z])`),
     enOrdinal: R("(?<![0-9])([0-9]+)(?:st|nd|rd|th)(?![A-Za-z])"),
-    long: R(`(?<![.,0-9])(0[0-9]+|[0-9]{7,})(?![0-9])${SUF}`),
+    long: R(`(?<![.,0-9])(0[0-9]+|[0-9]{10,})(?![0-9])${SUF}`),
     number: R(`(${NUM})(?![0-9])${SUF}`),
     acronym: R("(?<![A-Za-z])[A-Z]{2,6}(?![A-Za-z])"),
     spacePunct: R(" +([.,?!;:।])"),
     spaces: R(" {2,}"),
     yearBefore: D.year_before.length ? new RegExp(`(?:^|[^${L}])(?:${alt(D.year_before)}) $`, "u") : null,
-    yearAfter: D.year_after,
+    yearBeforeEn: new RegExp(`(?:^|[^A-Za-z${L}])(?:${alt(EN_YEAR_BEFORE)}) $`, "u"),
+    yearAfter: [...D.year_after, ...YEAR_AFTER_EXTRA, decadeFollow(lang)],
     nextLetter: new RegExp(`^ [${L}]`, "u"),
     months,
   };
@@ -292,6 +305,8 @@ export function normalizeNumbers(text, lang) {
   if (!has(DATA, lang)) throw new Error(`no number data for ${lang}`);
   const D = DATA[lang];
   const P = patterns(lang);
+  text = prenormalize(text, lang, { digits: D.units.slice(0, 10), months: D.months, point: D.point, plus: D.plus,
+    range: D.range });
   text = Array.from(text.normalize("NFC"), (c) => (has(CHAR_MAP, c) ? CHAR_MAP[c] : c)).join("");
   for (const [re, spoken] of P.abbr) text = text.replace(re, () => spoken);
   if (P.abbrAfterNumber) text = sub(P.abbrAfterNumber, text, (m) => " " + D.abbr_after_number[m[2]] + " ");
@@ -340,7 +355,6 @@ export function normalizeNumbers(text, lang) {
     }
     return " " + attach(words, suffix, lang) + " ";
   });
-  text = sub(P.percent, text, (m) => " " + attach(numberText(m[1], lang, true) + " " + D.percent, m[2], lang) + " ");
   text = sub(P.range, text, (m) => {
     let a = attach(integerWords(m[1], lang), D.range[0], lang);
     if (D.range[1]) a += " " + D.range[1];
@@ -349,6 +363,7 @@ export function normalizeNumbers(text, lang) {
     else if (m[4]) b += " " + D.percent;
     return " " + a + " " + attach(b, m[5], lang) + " ";
   });
+  text = sub(P.percent, text, (m) => " " + attach(numberText(m[1], lang, true) + " " + D.percent, m[2], lang) + " ");
   text = text.replace(P.negative, " " + D.minus + " ");
   text = sub(P.units, text, (m) => {
     const one = m[1].replaceAll(",", "") === "1";
@@ -367,7 +382,8 @@ export function normalizeNumbers(text, lang) {
     let year = false;
     if (/^1[1-9][0-9]{2}$/.test(raw)) {
       const nxt = after.startsWith(" ") ? after.slice(1).split(" ")[0] : "";
-      year = Boolean(P.yearBefore && P.yearBefore.test(before)) || P.yearAfter.some((w) => nxt.startsWith(w))
+      year = Boolean(P.yearBefore && P.yearBefore.test(before)) || P.yearBeforeEn.test(before)
+        || P.yearAfter.some((w) => nxt.startsWith(w))
         || P.yearAfter.some((w) => suffix.startsWith(w)) || P.months.includes(nxt);
     }
     const isAttr = !suffix && P.nextLetter.test(after);

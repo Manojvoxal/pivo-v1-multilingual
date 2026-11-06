@@ -9,6 +9,8 @@
 //   \s  -> Python's str.isspace() set (differs slightly from JS \s)
 //   \b  -> (?<![\p{L}\p{N}_]) / (?![\p{L}\p{N}_])   (Python \b is Unicode-aware, JS \b is not)
 
+import { prenormalize, WORDS as SEMIOTIC } from "./semiotic.js";
+
 // ------------------------------------------------------------------ regex helpers
 const WS = "\\t\\n\\v\\f\\r\\x1c-\\x20\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000";
 const WORD = "[\\p{L}\\p{N}_]";
@@ -287,6 +289,8 @@ export function attachSuffix(words, suffix) {
   if (FRONT_VOWEL_END.some((v) => last.endsWith(v))) {
     if (suffix.startsWith("ರ")) suffix = "ಯ" + suffix.slice(1);
     else if (suffix.startsWith("ಕ್ಕ")) suffix = "ಗ" + suffix.slice(3);
+  } else if (last.slice(-1) >= "\u0c95" && last.slice(-1) <= "\u0cb9" && suffix.startsWith("ರ")) {
+    suffix = "ದ" + suffix.slice(1);         // after -a nouns: ಸಾವಿರದಲ್ಲಿ, ಲಕ್ಷದಿಂದ, ನಿಮಿಷದಿಂದ
   }
   last = suffix[0] in VOWEL_SIGN ? join(last, suffix) : stem(last) + suffix;
   return head ? head + " " + last : last;
@@ -312,14 +316,23 @@ const ABBREVIATIONS = {
   "ಕ್ರಿ.ಪೂ.": "ಕ್ರಿಸ್ತ ಪೂರ್ವ", "ರೂ.": RUPEE, "ಶೇ.": PERCENT, "ನಂ.": "ನಂಬರ್",
   "ಉದಾ.": "ಉದಾಹರಣೆಗೆ", "ಕಿ.ಮೀ.": "ಕಿಲೋಮೀಟರ್", "ಕಿ.ಮೀ": "ಕಿಲೋಮೀಟರ್",
   "ಸೆಂ.ಮೀ.": "ಸೆಂಟಿಮೀಟರ್", "ಮಿ.ಮೀ.": "ಮಿಲಿಮೀಟರ್", "ಕೆ.ಜಿ.": "ಕೆಜಿ", "ಕೆ.ಜಿ": "ಕೆಜಿ",
+  "Dr.": "ಡಾಕ್ಟರ್", "Mr.": "ಮಿಸ್ಟರ್", "Mrs.": "ಮಿಸೆಸ್", "Prof.": "ಪ್ರೊಫೆಸರ್", "vs.": "ವರ್ಸಸ್",
 };
-const UNITS = {
+const OWN_UNITS = {
   "km/h": "ಕಿಲೋಮೀಟರ್ ಪ್ರತಿ ಗಂಟೆ", "kmph": "ಕಿಲೋಮೀಟರ್ ಪ್ರತಿ ಗಂಟೆ", "km": "ಕಿಲೋಮೀಟರ್",
   "kg": "ಕಿಲೋಗ್ರಾಂ", "cm": "ಸೆಂಟಿಮೀಟರ್", "mm": "ಮಿಲಿಮೀಟರ್", "ml": "ಮಿಲಿಲೀಟರ್",
   "gm": "ಗ್ರಾಂ", "g": "ಗ್ರಾಂ", "ltr": "ಲೀಟರ್", "l": "ಲೀಟರ್", "m": "ಮೀಟರ್",
   "°C": "ಡಿಗ್ರಿ ಸೆಲ್ಸಿಯಸ್", "°c": "ಡಿಗ್ರಿ ಸೆಲ್ಸಿಯಸ್", "°": "ಡಿಗ್ರಿ", "GB": "ಜಿಬಿ", "MB": "ಎಂಬಿ",
   "hrs": HOUR, "hr": HOUR, "mins": MINUTE, "min": MINUTE,
 };
+const UNITS = { ...SEMIOTIC.kn.units, ...OWN_UNITS };
+// money: currency -> (unit, sub-unit); scale words after an amount
+const CURRENCIES = { "₹": "inr", "Rs.": "inr", "Rs": "inr", "INR": "inr", [RUPEE]: "inr", "$": "usd", "US$": "usd",
+  "USD": "usd", "€": "eur", "EUR": "eur", "£": "gbp", "GBP": "gbp" };
+const CURRENCY_WORDS = { inr: [RUPEE, PAISE], usd: ["ಡಾಲರ್", "ಸೆಂಟ್"], eur: ["ಯೂರೋ", "ಸೆಂಟ್"], gbp: ["ಪೌಂಡ್", "ಪೆನ್ಸ್"] };
+const SCALES = { thousand: THOUSAND, lakh: LAKH, lakhs: LAKH, lac: LAKH, crore: CRORE, crores: CRORE, cr: CRORE,
+  Cr: CRORE, million: "ಮಿಲಿಯನ್", mn: "ಮಿಲಿಯನ್", billion: "ಬಿಲಿಯನ್", bn: "ಬಿಲಿಯನ್", [THOUSAND]: THOUSAND, [LAKH]: LAKH,
+  [CRORE]: CRORE };
 const INITIALS = new Set(["ಎ", "ಬಿ", "ಸಿ", "ಡಿ", "ಇ", "ಎಫ್", "ಜಿ", "ಎಚ್", "ಹೆಚ್", "ಐ", "ಜೆ", "ಕೆ", "ಎಲ್", "ಎಂ",
   "ಎನ್", "ಒ", "ಪಿ", "ಕ್ಯೂ", "ಆರ್", "ಎಸ್", "ಟಿ", "ಯು", "ವಿ", "ಡಬ್ಲ್ಯು", "ಎಕ್ಸ್", "ವೈ", "ಜೆಡ್", "ಝಡ್"]);
 const ACRONYM_WORDS = { NASA: "ನಾಸಾ", ISRO: "ಇಸ್ರೋ", COVID: "ಕೋವಿಡ್", UNESCO: "ಯುನೆಸ್ಕೋ", NATO: "ನ್ಯಾಟೋ", WiFi: "ವೈಫೈ", OK: "ಓಕೆ" };
@@ -336,6 +349,7 @@ function timeKn(m) {
   let hour = +m.groups.h; const minute = +m.groups.m;
   let ampm = (m.groups.ampm || "").replaceAll(".", "").toLowerCase() || null;
   if (ampm === null && hour > 12) { ampm = "pm"; hour -= 12; }
+  else if (hour === 0) { ampm = "am"; hour = 12; }
   const words = [];
   if (ampm) words.push(periodWord(hour, ampm));
   words.push(kannadaCardinal(hour), HOUR);
@@ -347,12 +361,16 @@ function dateKn(day, month, year, suffix) {
   return " " + attachSuffix(`${kannadaCardinal(day)} ${MONTHS[month - 1]} ${kannadaCardinal(year)}`, suffix) + " ";
 }
 function moneyKn(m) {
+  const [unit, subUnit] = CURRENCY_WORDS[CURRENCIES[m.groups.cur]];
   const amount = m.groups.amt.replaceAll(",", "");
+  if (m.groups.scale) {
+    return " " + attachSuffix(kannadaNumberText(amount) + " " + SCALES[m.groups.scale] + " " + unit, m.groups.suf) + " ";
+  }
   const dot = amount.indexOf(".");
-  const rupees = dot < 0 ? amount : amount.slice(0, dot), paise = dot < 0 ? "" : amount.slice(dot + 1);
-  let words = kannadaCardinal(rupees) + " " + RUPEE;
-  const p = paise ? Number(paise.padEnd(2, "0").slice(0, 2)) : 0;
-  if (p) words += " " + kannadaCardinal(p) + " " + PAISE;
+  const whole = dot < 0 ? amount : amount.slice(0, dot), cents = dot < 0 ? "" : amount.slice(dot + 1);
+  let words = kannadaCardinal(whole || "0") + " " + unit;
+  const c = cents ? Number(cents.padEnd(2, "0").slice(0, 2)) : 0;
+  if (c) words += " " + kannadaCardinal(c) + " " + subUnit;
   return " " + attachSuffix(words, m.groups.suf) + " ";
 }
 
@@ -361,26 +379,30 @@ const ORPHAN_ALT = byLengthDesc(ORPHAN_SUFFIXES).join("|");
 const R_KN = {
   abbr: byLengthDesc(Object.keys(ABBREVIATIONS)).map((w) => [rx(`(?<![${KN}])${escapeRe(w)}`), " " + ABBREVIATIONS[w] + " "]),
   initials: rx(String.raw`(?<![${KN}])([${KN}]+)\.(?=\s*[${KN}])`),
-  orphans: rx(String.raw`(\d|%|[AaPp]\.?[Mm]\.?)\s+(${ORPHAN_ALT})(?![${KN}])`),
+  orphans: rx(String.raw`(\d|%|[AaPp](?:\.[Mm]\.|[Mm]))\s+(${ORPHAN_ALT})(?![${KN}])`),
   mobile: rx(String.raw`(\+91[\s-]?)?(?<!\d)([6-9]\d{4})[\s-]?(\d{5})${END}${SUF}`),
   landline: rx(String.raw`(?<!\d)0\d{2,4}[\s-]\d{6,8}${END}${SUF}`),
   pin: rx(String.raw`(ಪಿನ್\s?ಕೋಡ್|ಪಿನ್|PIN|[Pp]in\s?[Cc]ode|[${KN}]+\s?-)\s*:?\s*(\d{6})${END}${SUF}`),
   isoDate: rx(String.raw`(?<!\d)(\d{4})-(\d{2})-(\d{2})${END}${SUF}`),
   date: rx(String.raw`(?<![\d.])(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})${END}${SUF}`),
-  time: rx(String.raw`(?<!\d)(?<h>[01]?\d|2[0-3]):(?<m>[0-5]\d)\s*(?<ampm>[AaPp]\.?[Mm]\.?)?(?![A-Za-z])${SUF}`),
-  money: rx(String.raw`(?:₹|${B0}Rs\.?|${B0}INR|${RUPEE})\s*(?<amt>${NUM})${END}${SUF}`),
+  time: rx(String.raw`(?<!\d)(?<h>[01]?\d|2[0-3]):(?<m>[0-5]\d)(?:\s*(?<ampm>[AaPp](?:\.[Mm]\.|[Mm])))?(?![A-Za-z])${SUF}`),
+  money: rx(String.raw`(?<![A-Za-z])(?<cur>${byLengthDesc(Object.keys(CURRENCIES)).map(escapeRe).join("|")})\s*(?<amt>${NUM})`
+    + String.raw`(?:\s?(?<scale>${byLengthDesc(Object.keys(SCALES)).map(escapeRe).join("|")})(?![A-Za-z${KN}]))?${END}${SUF}`),
   she: rx(`(?<![${KN}])ಶೇ(?![${KN}])`),
+  percentRange: rx(String.raw`(?<![\d.,])(\d+)\s?[-–]\s?(\d+)\s?%${SUF}`),
   percent: rx(String.raw`(${NUM})\s*%${SUF}`),
-  range: rx(String.raw`(?<![\d.,])(\d+)\s?[-–]\s?(\d+)${END}${SUF}`),
+  range: rx(String.raw`(?<![\d.,])(\d+)\s?[-–]\s?(\d+)${END}(?:\s?(${UNIT_ALT})(?![A-Za-z]))?${SUF}`),
+  minus: rx(String.raw`(?<![\dA-Za-z${KN}])-(?=\d)`),
   units: rx(String.raw`(${NUM})\s?(${UNIT_ALT})(?![A-Za-z])`),
   ordinal: rx(String.raw`(?<!\d)(\d+)(?:st|nd|rd|th)${B1}`),
-  longDigits: rx(String.raw`(?<![.,\d])(0\d+|\d{7,})${END}${SUF}`),
+  longDigits: rx(String.raw`(?<![.,\d])(0\d+|\d{10,})${END}${SUF}`),
   number: rx(String.raw`(${NUM})${SUF}`),
   acronym: rx(String.raw`${B0}[A-Za-z]{2,6}${B1}`),
   spaceBeforePunct: rx(String.raw`\s+([.,?!;:])`),
 };
 
 export function normalizeKannadaText(text) {
+  text = prenormalize(text, "kn", { digits: ONES.slice(0, 10) });
   text = translate(text.normalize("NFC"), KN_DIGITS);
   for (const [re, spoken] of R_KN.abbr) text = text.replace(re, () => spoken);
   text = sub(R_KN.initials, (m) => (INITIALS.has(m[1]) ? m[1] + " " : m[0]), text);
@@ -396,9 +418,12 @@ export function normalizeKannadaText(text) {
   text = sub(R_KN.time, timeKn, text);
   text = sub(R_KN.money, moneyKn, text);
   text = text.replace(R_KN.she, ` ${PERCENT} `);
+  text = sub(R_KN.percentRange, (m) => ` ${PERCENT} ` + attachSuffix(kannadaCardinal(m[1]), "ರಿಂದ") + " "
+    + attachSuffix(kannadaCardinal(m[2]), m.groups.suf) + " ", text);
   text = sub(R_KN.percent, (m) => ` ${PERCENT} ` + attachSuffix(kannadaNumberText(m[1]), m.groups.suf) + " ", text);
   text = sub(R_KN.range, (m) => " " + attachSuffix(kannadaCardinal(m[1]), "ರಿಂದ") + " "
-    + attachSuffix(kannadaCardinal(m[2]), m.groups.suf) + " ", text);
+    + attachSuffix(kannadaCardinal(m[2]) + (m[3] ? " " + UNITS[m[3]] : ""), m.groups.suf) + " ", text);
+  text = text.replace(R_KN.minus, " ಮೈನಸ್ ");
   text = sub(R_KN.units, (m) => ` ${kannadaNumberText(m[1])} ${UNITS[m[2]]} `, text);
   text = sub(R_KN.ordinal, (m) => " " + attachSuffix(kannadaCardinal(m[1]), "ನೇ") + " ", text);
   text = sub(R_KN.longDigits, (m) => " " + attachSuffix(digitsKn(m[1]), m.groups.suf) + " ", text);
@@ -420,11 +445,29 @@ const INDIAN_ENGLISH_LEXICON = {
   crore: ["K", "R", "AO1", "R"], crores: ["K", "R", "AO1", "R", "Z"],
   rupee: ["R", "UW1", "P", "IY0"], rupees: ["R", "UW1", "P", "IY0", "Z"],
   paise: ["P", "AY1", "S", "EY0"], paisa: ["P", "AY1", "S", "AA0"],
+  gigabit: ["G", "IH1", "G", "AH0", "B", "IH2", "T"], gigabits: ["G", "IH1", "G", "AH0", "B", "IH2", "T", "S"],
+  gigahertz: ["G", "IH1", "G", "AH0", "HH", "ER2", "T", "S"], kilohertz: ["K", "IH1", "L", "AH0", "HH", "ER2", "T", "S"],
+  megabits: ["M", "EH1", "G", "AH0", "B", "IH2", "T", "S"],
+  megapixel: ["M", "EH1", "G", "AH0", "P", "IH2", "K", "S", "AH0", "L"],
+  megapixels: ["M", "EH1", "G", "AH0", "P", "IH2", "K", "S", "AH0", "L", "Z"],
+  milliamp: ["M", "IH1", "L", "IY0", "AE2", "M", "P"],
+  covid: ["K", "OW1", "V", "IH0", "D"], isro: ["IH1", "S", "R", "OW0"], saarc: ["S", "AA1", "R", "K"],
+  sebi: ["S", "EH1", "B", "IY0"], neet: ["N", "IY1", "T"],
 };
-const EN_UNITS = { "km/h": "kilometers per hour", "kmph": "kilometers per hour", "km": "kilometers",
-  "kg": "kilograms", "cm": "centimeters", "mm": "millimeters", "ml": "milliliters",
-  "°C": "degrees celsius", "°c": "degrees celsius", "°": "degrees" };
+const EN_UNITS = SEMIOTIC.en.units;               // unit -> [singular, plural]
 const DIGIT_WORDS = "zero one two three four five six seven eight nine".split(" ");
+const EN_CURRENCIES = { "₹": "inr", "Rs.": "inr", "Rs": "inr", "INR": "inr", "$": "usd", "US$": "usd", "USD": "usd",
+  "€": "eur", "EUR": "eur", "£": "gbp", "GBP": "gbp" };
+const EN_CURRENCY_WORDS = { inr: ["rupee", "rupees", "paisa", "paise"], usd: ["dollar", "dollars", "cent", "cents"],
+  eur: ["euro", "euros", "cent", "cents"], gbp: ["pound", "pounds", "penny", "pence"] };
+const EN_SCALES = { thousand: "thousand", lakh: "lakh", lakhs: "lakh", lac: "lakh", crore: "crore", crores: "crore",
+  cr: "crore", Cr: "crore", million: "million", mn: "million", billion: "billion", bn: "billion", trillion: "trillion" };
+const YEAR_WORDS_BEFORE = ["in", "In", "since", "Since", "from", "From", "till", "Till", "until", "Until", "year", "Year",
+  "during", "During", "circa", "around", "by", "By", "before", "Before", "after", "After", "copyright", "Copyright", "of"];
+const YEAR = String.raw`(?:1[1-9]\d{2}|20\d{2})`;
+const EN_WORD_ACRONYMS = { COVID: "covid", ISRO: "isro", UNESCO: "unesco", UNICEF: "unicef", NATO: "nato", AIDS: "aids",
+  SAARC: "saarc", OPEC: "opec", SEBI: "sebi", NEET: "neet" };
+const FRACTION_NAMES = { 2: ["half", "halves"], 4: ["quarter", "quarters"] };
 
 export function indianEnglishCardinal(n) {
   n = BigInt(n);
@@ -438,42 +481,115 @@ export function indianEnglishCardinal(n) {
   return words.join(" ");
 }
 const enDigits = (s) => Array.from(s, (d) => DIGIT_WORDS[+d]).join(" ");
+
+/** 1947 -> nineteen forty seven, 2005 -> two thousand five, 2024 -> twenty twenty four. */
+export function enYear(y) {
+  y = Number(y);
+  if (!(y >= 1100 && y <= 2099) || (y >= 2000 && y <= 2009)) return cardinal(y);
+  const high = Math.floor(y / 100), low = y % 100;
+  if (low === 0) return cardinal(high) + " hundred";
+  return cardinal(high) + (low < 10 ? " oh " : " ") + cardinal(low);
+}
+/** 1990 -> nineteen nineties, 1800 -> eighteen hundreds. */
+function enDecade(y) {
+  const words = enYear(y).split(" ");
+  const last = words[words.length - 1];
+  words[words.length - 1] = last.endsWith("y") ? last.slice(0, -1) + "ies" : last + "s";
+  return words.join(" ");
+}
+function enNumber(raw) {
+  const [whole, frac = ""] = raw.replaceAll(",", "").split(".");
+  return indianEnglishCardinal(whole || "0") + (frac ? " point " + enDigits(frac) : "");
+}
+function enFraction(a, b, mixed) {
+  const name = FRACTION_NAMES[b] ? FRACTION_NAMES[b][a === 1 ? 0 : 1] : ordinal(b) + (a === 1 ? "" : "s");
+  if (mixed !== null) return cardinal(mixed) + " and " + (a === 1 ? "a " + name : cardinal(a) + " " + name);
+  return cardinal(a) + " " + name;
+}
+const alt = (keys) => byLengthDesc(keys).map(escapeRe).join("|");
 const R_IE = {
+  wordAcronyms: rx(String.raw`(?<![A-Za-z])(${Object.keys(EN_WORD_ACRONYMS).join("|")})(?![A-Za-z])`),
   mobile: rx(String.raw`(\+91[\s-]?)?${B0}([6-9]\d{4})[\s-]?(\d{5})${B1}`),
   date: rx(String.raw`${B0}(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})${B1}`),
-  clock: rx(String.raw`${B0}([01]?\d|2[0-3]):([0-5]\d)\s*([AaPp]\.?[Mm]\.?)?(?![A-Za-z])`),
-  money: rx(String.raw`(?:₹|${B0}Rs\.?|${B0}INR)\s*(\d{1,3}(?:,\d{2,3})+(?:\.\d{1,2})?|\d+(?:\.\d{1,2})?)`),
+  clock: rx(String.raw`${B0}([01]?\d|2[0-3]):([0-5]\d)(?:\s*([AaPp](?:\.[Mm]\.|[Mm])))?(?![A-Za-z])`),
+  money: rx(String.raw`(?<![A-Za-z])(${alt(Object.keys(EN_CURRENCIES))})\s*(\d{1,3}(?:,\d{2,3})+(?:\.\d+)?|\d+(?:\.\d+)?)`
+    + String.raw`(?:\s?(${alt(Object.keys(EN_SCALES))})(?![A-Za-z]))?`),
   grouped: rx(String.raw`${B0}\d{1,2}(?:,\d{2})+,\d{3}${B1}`),
-  units: rx(String.raw`(\d+(?:\.\d+)?)\s?(${byLengthDesc(Object.keys(EN_UNITS)).map(escapeRe).join("|")})(?![A-Za-z])`),
+  units: rx(String.raw`(\d+(?:\.\d+)?)\s?(${alt(Object.keys(EN_UNITS))})(?![A-Za-z])`),
+  percent: rx(String.raw`(\d+(?:\.\d+)?)\s?%`),
+  decade: rx(String.raw`(?<![0-9])(1[1-9]\d{2}|20\d{2})(?:'s|’s|s)(?![A-Za-z])`),
+  yearRange: rx(String.raw`(?<![0-9.,])(${YEAR})\s?-\s?(${YEAR}|\d{2})(?![0-9]|[.,][0-9])`),
+  fromTo: rx(String.raw`(?<![A-Za-z])(from|From|between|Between)\s(${YEAR})\s(to|and|till|until)\s(${YEAR})(?![0-9])`),
+  monthYear: rx(String.raw`(?<![A-Za-z])(${MONTHS_EN.join("|")}),?\s(${YEAR})(?![0-9])`),
+  yearBefore: rx(String.raw`(?<![A-Za-z])(${YEAR_WORDS_BEFORE.map(escapeRe).join("|")})\s+(${YEAR})(?![0-9]|[.,][0-9])`),
+  era: rx(String.raw`(?<![0-9.,])(${YEAR})\s?(AD|BC|CE|BCE|A\.D\.|B\.C\.)(?![A-Za-z])`),
+  fraction: rx(String.raw`(?<![0-9/.])(?:(\d{1,3})\s)?(\d{1,2})/(\d{1,2})(?![0-9/]|\.\d)`),
+  rating: rx(String.raw`(?<![0-9/.])(\d{1,3}\.\d{1,2})/(\d{1,3})(?![0-9/]|\.\d)`),
+  range: rx(String.raw`(?<![0-9.,])(\d+(?:\.\d+)?)\s?-\s?(\d+(?:\.\d+)?)(?![0-9]|[.,][0-9])`),
+  minus: rx(String.raw`(?<![0-9A-Za-z])-(?=\d)`),
+  longDigits: rx(String.raw`(?<![0-9.,])(0\d+|\d{10,})(?![0-9]|[.,][0-9])`),
+  lakhs: rx(String.raw`(?<![0-9.,])(\d{6,9})(?![0-9]|[.,][0-9])`),
   spaceBeforePunct: rx(String.raw`\s+([.,?!;:])`),
 };
 
 export function normalizeIndianEnglish(text) {
-  text = text.normalize("NFKC");
+  text = prenormalize(text, "en", { digits: DIGIT_WORDS });
+  // NFKC, but keep ² ³ (m², ft³ are units)
+  text = text.replaceAll("²", "\x02").replaceAll("³", "\x03").normalize("NFKC").replaceAll("\x02", "²").replaceAll("\x03", "³");
+  text = sub(R_IE.wordAcronyms, (m) => EN_WORD_ACRONYMS[m[1]], text);
   text = sub(R_IE.mobile, (m) => (m[1] ? " plus nine one " : " ") + enDigits(m[2] + m[3]) + " ", text);
   text = sub(R_IE.date, (m) => {
     const day = +m[1], month = +m[2];
     if (!(month >= 1 && month <= 12 && day >= 1 && day <= 31)) return m[0];
-    return ` ${ordinal(day)} ${MONTHS_EN[month - 1]}, ${cardinal(m[3])} `;
+    return ` ${ordinal(day)} ${MONTHS_EN[month - 1]}, ${enYear(m[3])} `;
   }, text);
   text = sub(R_IE.clock, (m) => {
-    const hour = +m[1], minute = +m[2];
-    const words = cardinal(hour) + (minute === 0 ? " o'clock" : minute < 10 ? " oh " + cardinal(minute) : " " + cardinal(minute));
-    const ampm = (m[3] || "").replaceAll(".", "").toUpperCase();
+    let hour = +m[1];
+    const minute = +m[2];
+    let ampm = (m[3] || "").replaceAll(".", "").toUpperCase();
+    if (hour === 0 && !ampm) {
+      if (minute === 0) return " midnight ";
+      hour = 12; ampm = "AM";
+    }
+    let words = cardinal(hour);
+    if (minute === 0) words += ampm ? "" : " o'clock";
+    else words += (minute < 10 ? " oh " : " ") + cardinal(minute);
     return " " + words + (ampm ? " " + Array.from(ampm).join(" ") : "") + " ";
   }, text);
   text = sub(R_IE.money, (m) => {
-    const amount = m[1].replaceAll(",", "");
-    const dot = amount.indexOf(".");
-    const rupees = dot < 0 ? amount : amount.slice(0, dot), paise = dot < 0 ? "" : amount.slice(dot + 1);
-    const r = BigInt(rupees);
-    let words = indianEnglishCardinal(r) + (r === 1n ? " rupee" : " rupees");
-    const p = paise ? Number(paise.padEnd(2, "0").slice(0, 2)) : 0;
-    if (p) words += " and " + cardinal(p) + " paise";
+    const [one, many, subOne, subMany] = EN_CURRENCY_WORDS[EN_CURRENCIES[m[1]]];
+    const amount = m[2].replaceAll(",", "");
+    if (m[3]) return ` ${enNumber(amount)} ${EN_SCALES[m[3]]} ${many} `;
+    const [whole, cents = ""] = amount.split(".");
+    const n = BigInt(whole || "0");
+    let words = indianEnglishCardinal(n) + " " + (n === 1n ? one : many);
+    const c = cents ? Number(cents.padEnd(2, "0").slice(0, 2)) : 0;
+    if (c) words += " and " + cardinal(c) + " " + (c === 1 ? subOne : subMany);
     return " " + words + " ";
   }, text);
   text = sub(R_IE.grouped, (m) => " " + indianEnglishCardinal(m[0].replaceAll(",", "")) + " ", text);
-  text = sub(R_IE.units, (m) => `${m[1]} ${EN_UNITS[m[2]]}`, text);
+  text = sub(R_IE.units, (m) => `${m[1]} ${EN_UNITS[m[2]][m[1] === "1" ? 0 : 1]}`, text);
+  text = sub(R_IE.percent, (m) => `${m[1]} percent`, text);
+  // years: decades, ranges, after a month or a year word
+  text = sub(R_IE.decade, (m) => (+m[1] % 10 === 0 ? " " + enDecade(m[1]) + " " : m[0]), text);
+  text = sub(R_IE.yearRange, (m) => ` ${enYear(m[1])} to ` + (m[2].length === 4 ? enYear(m[2]) : cardinal(+m[2])) + " ", text);
+  text = sub(R_IE.fromTo, (m) => `${m[1]} ${enYear(m[2])} ${m[3]} ${enYear(m[4])}`, text);
+  text = sub(R_IE.monthYear, (m) => `${m[1]} ${enYear(m[2])}`, text);
+  text = sub(R_IE.yearBefore, (m) => `${m[1]} ${enYear(m[2])}`, text);
+  text = sub(R_IE.era, (m) => `${enYear(m[1])} ${Array.from(m[2].replaceAll(".", "")).join(" ")}`, text);
+  // fractions: 1/2, 3/4, 2 1/2 (a < b <= 20), else "a by b"
+  text = sub(R_IE.fraction, (m) => {
+    const a = +m[2], b = +m[3];
+    if (a > 0 && a < b && b <= 20) return " " + enFraction(a, b, m[1] ? +m[1] : null) + " ";
+    return ` ${m[1] ? m[1] + " " : ""}${m[2]} by ${m[3]} `; // 24/7, 50/50
+  }, text);
+  text = sub(R_IE.rating, (m) => `${m[1]} out of ${m[2]}`, text); // 4.5/5
+  // ranges and minus: 10-20 -> 10 to 20, -5 -> minus 5
+  text = sub(R_IE.range, (m) => `${m[1]} to ${m[2]}`, text);
+  text = text.replace(R_IE.minus, " minus ");
+  // long numbers: leading zero or 10+ digits -> digit by digit; 6-9 digits -> lakh / crore
+  text = sub(R_IE.longDigits, (m) => " " + enDigits(m[1]) + " ", text);
+  text = sub(R_IE.lakhs, (m) => " " + indianEnglishCardinal(m[1]) + " ", text);
   text = text.replace(R_IE.spaceBeforePunct, "$1");
   return collapse(text);
 }

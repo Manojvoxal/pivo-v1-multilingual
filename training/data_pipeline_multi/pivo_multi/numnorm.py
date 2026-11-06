@@ -17,9 +17,13 @@ Formal / news-reading style, the same rules as PiVo's Kannada normaliser plus a 
                            5ஆம் 5வது, 5వ, 5-ാം 5ാമത്തെ
     negative numbers       -5, −12.5
     attached suffixes      2026లో, 2026இல், 2026-ൽ, ২০২৬-এ, ୨୦୨୬ରେ, 2026માં (with sandhi)
-    long numbers           7+ digits or leading 0 -> digit by digit (round lakhs/crores read as numbers)
+    long numbers           10+ digits or leading 0 -> digit by digit (round lakhs/crores read as numbers);
+                           up to 9 digits are read as numbers (phones are found by semiotic.py)
     numbers                lakh / crore grouping, decimals, native digits (०-९ ০-৯ ੦-੯ ...)
     acronyms, symbols      BJP -> letter names in the language's script; & + = @ % ° as words
+
+semiotic.prenormalize runs first (phones, e-mail / URLs, date formats, fractions, math, serial codes,
+dotted numbers, roman numerals ...; words in semiotic.json).
 
 All words live in numwords.json (shared with the web app's JavaScript port, which must give
 exactly the same output; see web/tests/numbers_parity.*).
@@ -31,8 +35,22 @@ import unicodedata
 from functools import lru_cache
 from pathlib import Path
 
+from . import semiotic
+
 DATA = json.loads(Path(__file__).with_name("numwords.json").read_text(encoding="utf-8"))
 LANGS = tuple(DATA)
+for _lang, _D in DATA.items():          # units from semiotic.json, the language's own spelling first
+    _D["measures"] = {**semiotic.WORDS[_lang]["units"], **_D["measures"]}
+# English words before a year in mixed text: "in 1947", "since 1857"
+EN_YEAR_BEFORE = ["in", "In", "since", "Since", "from", "From", "till", "Till", "until", "Until", "year", "Year",
+                  "during", "During", "circa", "around", "by", "to", "before", "after", "Before", "After"]
+YEAR_AFTER_EXTRA = ["AD", "BC", "CE", "BCE"]
+
+
+def _decade_follow(lang):
+    """First word / suffix after the year in the language's decade phrase ("का" in "{y} का दशक")."""
+    rest = semiotic.WORDS[lang]["decade"].split("{y}", 1)[1].lstrip("-")
+    return rest.split(" ")[1] if rest.startswith(" ") else rest.split(" ")[0]
 SCRIPT_BASE = {"hi": 0x900, "mr": 0x900, "bn": 0x980, "as": 0x980, "pa": 0xA00, "gu": 0xA80,
                "or": 0xB00, "ta": 0xB80, "te": 0xC00, "ml": 0xD00}
 MAX_DIGITS = 15                     # longer integers are read digit by digit (JS Number is exact to 2^53)
@@ -274,24 +292,26 @@ def _patterns(lang):
         "iso": re.compile(rf"(?<![0-9])([0-9]{{4}})-([0-9]{{2}})-([0-9]{{2}})(?![0-9]){SUF}"),
         "dmy": re.compile(rf"(?<![0-9.])([0-9]{{1,2}})[/.-]([0-9]{{1,2}})[/.-]([0-9]{{4}})(?![0-9]){SUF}"),
         "month_year": re.compile(rf"(?<![A-Za-z{L}])({_esc(months)}),? ([0-9]{{4}})(?![0-9]){SUF}"),
-        "time": re.compile(rf"(?<![0-9])([01]?[0-9]|2[0-3]):([0-5][0-9])(?::[0-5][0-9])?(?: ?([AaPp]\.?[Mm]\.?))?"
+        "time": re.compile(rf"(?<![0-9])([01]?[0-9]|2[0-3]):([0-5][0-9])(?::[0-5][0-9])?(?: ?([AaPp](?:\.[Mm]\.|[Mm])))?"
                            rf"(?![A-Za-z]){clock_words}{SUF}"),
-        "time_ampm": re.compile(rf"(?<![0-9.,])(1[0-2]|0?[1-9]) ?([AaPp]\.?[Mm]\.?)(?![A-Za-z]){SUF}"),
+        "time_ampm": re.compile(rf"(?<![0-9.,])(1[0-2]|0?[1-9]) ?([AaPp](?:\.[Mm]\.|[Mm]))(?![A-Za-z]){SUF}"),
         "money": re.compile(rf"({_esc(sum(cur.values(), []))}) ?({NUM})(?: ?({scale_alt})(?![A-Za-z{L}]))?"
                             rf"(?![0-9]){SUF}"),
         "currency_of": {s: k for k, v in cur.items() for s in v},
         "percent": re.compile(rf"({NUM}) ?%{SUF}"),
-        "range": re.compile(rf"(?<![0-9.,])([0-9]+) ?[-–] ?([0-9]+)(?![0-9.,])(?: ?({units})(?![A-Za-z])| ?(%))?{SUF}"),
+        "range": re.compile(rf"(?<![0-9.,])([0-9]+) ?[-–] ?([0-9]+)(?![0-9]|[.,][0-9])(?: ?({units})(?![A-Za-z])| ?(%))?"
+                            rf"{SUF}"),
         "negative": re.compile(rf"(?<![0-9A-Za-z{L}])-(?=[0-9])"),
         "units": re.compile(rf"({NUM}) ?({units})(?![A-Za-z])"),
         "en_ordinal": re.compile(r"(?<![0-9])([0-9]+)(?:st|nd|rd|th)(?![A-Za-z])"),
-        "long": re.compile(rf"(?<![.,0-9])(0[0-9]+|[0-9]{{7,}})(?![0-9]){SUF}"),
+        "long": re.compile(rf"(?<![.,0-9])(0[0-9]+|[0-9]{{10,}})(?![0-9]){SUF}"),
         "number": re.compile(rf"({NUM})(?![0-9]){SUF}"),
         "acronym": re.compile(r"(?<![A-Za-z])[A-Z]{2,6}(?![A-Za-z])"),
         "space_punct": re.compile(r" +([.,?!;:।])"),
         "spaces": re.compile(r" {2,}"),
         "year_before": re.compile(rf"(?:^|[^{L}])(?:{_esc(D['year_before'])}) $") if D["year_before"] else None,
-        "year_after": tuple(D["year_after"]),
+        "year_before_en": re.compile(rf"(?:^|[^A-Za-z{L}])(?:{_esc(EN_YEAR_BEFORE)}) $"),
+        "year_after": tuple(D["year_after"] + YEAR_AFTER_EXTRA + [_decade_follow(lang)]),
         "next_letter": re.compile(rf"^ [{L}]"),
         "months": tuple(months),
     }
@@ -364,6 +384,8 @@ def normalize_numbers(text, lang):
         raise ValueError(f"no number data for {lang!r}")
     D = DATA[lang]
     P = _patterns(lang)
+    text = semiotic.prenormalize(text, lang, {"digits": D["units"][:10], "months": D["months"], "point": D["point"],
+                                              "plus": D["plus"], "range": D["range"]})
     text = unicodedata.normalize("NFC", text).translate(_DIGITS).translate(_SPACES)
     for rx, spoken in P["abbr"]:
         text = rx.sub(spoken, text)
@@ -416,9 +438,6 @@ def normalize_numbers(text, lang):
             words += sep + cardinal(sub_units, lang, True) + " " + _plural(D, big, sub_units == 1)
         return " " + attach(words, suffix, lang) + " "
     text = P["money"].sub(money, text)
-    text = P["percent"].sub(lambda m: " " + attach(number_text(m[1], lang, True) + " " + D["percent"], m[2], lang)
-                            + " ", text)
-
     def rng(m):
         a = attach(integer_words(m[1], lang), D["range"][0], lang)
         if D["range"][1]:
@@ -430,6 +449,9 @@ def normalize_numbers(text, lang):
             b += " " + D["percent"]
         return " " + a + " " + attach(b, m[5], lang) + " "
     text = P["range"].sub(rng, text)
+    text = P["percent"].sub(lambda m: " " + attach(number_text(m[1], lang, True) + " " + D["percent"], m[2], lang)
+                            + " ", text)
+
     text = P["negative"].sub(" " + D["minus"] + " ", text)
 
     def unit(m):
@@ -454,7 +476,8 @@ def normalize_numbers(text, lang):
         if re.fullmatch(r"1[1-9][0-9]{2}", raw):
             yb, ya = P["year_before"], P["year_after"]
             nxt = after[1:].split(" ", 1)[0] if after.startswith(" ") else ""
-            year = (bool(yb and yb.search(before)) or any(nxt.startswith(w) for w in ya)
+            year = (bool(yb and yb.search(before)) or bool(P["year_before_en"].search(before))
+                    or any(nxt.startswith(w) for w in ya)
                     or any(suffix.startswith(w) for w in ya) or nxt in P["months"])
         attr = not suffix and bool(P["next_letter"].match(after))
         return " " + _suffix_words(raw, suffix, lang, attr, year) + " "

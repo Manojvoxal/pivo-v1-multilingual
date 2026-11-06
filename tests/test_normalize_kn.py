@@ -54,7 +54,7 @@ def test_indian_english():
     assert normalize_indian_english('It costs ₹500.') == 'It costs five hundred rupees.'
     assert normalize_indian_english('Rs. 2,50,00,000') == 'two crore fifty lakh rupees'
     assert normalize_indian_english('at 10:30 AM on 03/11/2026') == \
-        'at ten thirty A M on third November, two thousand twenty six'
+        'at ten thirty A M on third November, twenty twenty six'
     assert normalize_indian_english('Call 98450 12345') == 'Call nine eight four five zero one two three four five'
     assert normalize_indian_english('NASA is ready.') == 'NASA is ready.'
 
